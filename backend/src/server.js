@@ -26,16 +26,22 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   console.log('CORS request from origin:', origin);
   
-  // Принудительно устанавливаем origin из запроса
-  res.header('Access-Control-Allow-Origin', origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // Для credentials: 'include' нельзя использовать '*', нужно конкретный origin
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  } else {
+    // Если нет origin (например, Postman), разрешаем все
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
   res.header('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
   
   console.log('CORS headers set:', {
     origin: origin || '*',
-    credentials: 'true',
+    credentials: origin ? 'true' : 'false',
     methods: 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
   });
   
@@ -47,8 +53,14 @@ app.options('*', (req, res) => {
   const origin = req.headers.origin;
   console.log('Preflight request from origin:', origin);
   
-  res.header('Access-Control-Allow-Origin', origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // Для credentials: 'include' нельзя использовать '*', нужно конкретный origin
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
   res.header('Access-Control-Max-Age', '86400'); // 24 часа
