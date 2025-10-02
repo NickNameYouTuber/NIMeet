@@ -12,14 +12,32 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(cors({
-  origin: [
-    process.env.CLIENT_URL || 'http://localhost:3000',
-    'http://localhost:7677',
-    'https://meet.nicorp.tech',
-    'http://meet.nicorp.tech'
-  ],
+  origin: function (origin, callback) {
+    // Разрешаем все origin для локальной разработки
+    if (!origin || 
+        origin.includes('localhost') || 
+        origin.includes('127.0.0.1') ||
+        origin.includes('meet.nicorp.tech') ||
+        origin.includes('tauri.localhost')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Не разрешено CORS политикой'));
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Length', 'Content-Range']
 }));
+
+// Обработка preflight запросов
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
 
 app.use(express.json());
 

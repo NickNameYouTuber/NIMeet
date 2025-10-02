@@ -15,6 +15,7 @@ class RoomService {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(options || {}),
     });
 
@@ -36,6 +37,7 @@ class RoomService {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -47,7 +49,9 @@ class RoomService {
   }
 
   async getRoomInfo(roomId: string): Promise<Room> {
-    const response = await fetch(`${API_BASE_URL}/api/rooms/${roomId}`);
+    const response = await fetch(`${API_BASE_URL}/api/rooms/${roomId}`, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
       const error = await response.json();
@@ -68,6 +72,7 @@ class RoomService {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -88,6 +93,7 @@ class RoomService {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(updates),
     });
 

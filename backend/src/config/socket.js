@@ -4,12 +4,18 @@ const jwt = require('jsonwebtoken');
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: [
-        process.env.CLIENT_URL || 'http://localhost:3000',
-        'http://localhost:7677',
-        'https://meet.nicorp.tech',
-        'http://meet.nicorp.tech'
-      ],
+      origin: function (origin, callback) {
+        // Разрешаем все origin для локальной разработки
+        if (!origin || 
+            origin.includes('localhost') || 
+            origin.includes('127.0.0.1') ||
+            origin.includes('meet.nicorp.tech') ||
+            origin.includes('tauri.localhost')) {
+          callback(null, true);
+        } else {
+          callback(new Error('Не разрешено CORS политикой'));
+        }
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },
