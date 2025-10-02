@@ -12,30 +12,26 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Разрешаем все origin для локальной разработки
-    if (!origin || 
-        origin.includes('localhost') || 
-        origin.includes('127.0.0.1') ||
-        origin.includes('meet.nicorp.tech') ||
-        origin.includes('tauri.localhost')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Не разрешено CORS политикой'));
-    }
-  },
+  origin: true, // Разрешаем все origin для отладки
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Content-Length', 'Content-Range']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Access-Control-Request-Method', 'Access-Control-Request-Headers'],
+  exposedHeaders: ['Content-Length', 'Content-Range'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
+
+// Дополнительные CORS заголовки для всех ответов
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  next();
+});
 
 // Обработка preflight запросов
 app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
   res.sendStatus(200);
 });
 
