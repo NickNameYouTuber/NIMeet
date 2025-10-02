@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "NIMeet",
+  "version": "0.1.0",
+  "identifier": "com.nicorp.nimeet",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+      "beforeBuildCommand": "set REACT_APP_API_URL=https://meet.nicorp.tech && set REACT_APP_SOCKET_URL=https://meet.nicorp.tech && npm run build",
+    "devUrl": "http://localhost:7677",
+    "frontendDist": "../build"
+  },
+  "app": {
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "NIMeet",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

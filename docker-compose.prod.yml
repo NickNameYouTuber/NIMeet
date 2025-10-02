@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: nimeet-mongodb-prod
+    restart: always
+    ports:
+      - "7675:27017"
+    volumes:
+      - mongodb_data_prod:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: nimeet
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-nimeet}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-nimeetpass}
+    networks:
+      - nimeet-network-prod
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: nimeet-backend-prod
+    restart: always
+    ports:
+      - "7676:5000"
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://${MONGO_ROOT_USERNAME:-nimeet}:${MONGO_ROOT_PASSWORD:-nimeetpass}@mongodb:27017/nimeet?authSource=admin
+      - JWT_SECRET=${JWT_SECRET:-nimeet_change_me_super_secret}
+      - CLIENT_URL=https://meet.nicorp.tech
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    networks:
+      - nimeet-network-prod
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        REACT_APP_API_URL: https://meet.nicorp.tech
+        REACT_APP_SOCKET_URL: https://meet.nicorp.tech
+    container_name: nimeet-frontend-prod
+    restart: always
+    ports:
+      - "7677:80"
+    environment:
+      - REACT_APP_API_URL=https://meet.nicorp.tech
+      - REACT_APP_SOCKET_URL=https://meet.nicorp.tech
+    depends_on:
+      - backend
+    networks:
+      - nimeet-network-prod
+
+networks:
+  nimeet-network-prod:
+    driver: bridge
+
+volumes:
+  mongodb_data_prod:
+    driver: local
+
