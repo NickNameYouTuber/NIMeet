@@ -160,7 +160,10 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         let bestTileWidth = 0;
         let bestTileHeight = 0;
         
-        for (let cols = 1; cols <= Math.min(maxCols, participantsOnPage); cols++) {
+        const startCols = isMobile ? 1 : 1;
+        const endCols = isMobile ? 1 : Math.min(maxCols, participantsOnPage);
+        
+        for (let cols = startCols; cols <= endCols; cols++) {
             const rows = Math.ceil(participantsOnPage / cols);
             
             if (rows > maxRows) continue;
