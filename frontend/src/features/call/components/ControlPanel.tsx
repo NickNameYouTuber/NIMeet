@@ -35,8 +35,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 }) => {
     return (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50 py-2 md:py-3">
-            <div className="max-w-7xl mx-auto px-2 md:px-4">
-                <div className="flex justify-center gap-2 md:gap-4 overflow-x-auto scrollbar-hide">
+            <div className="max-w-7xl mx-auto px-2 md:px-4 overflow-x-auto scrollbar-hide">
+                <div className="flex justify-center gap-2 md:gap-4 min-w-max">
                     <button
                         onClick={onToggleMicrophone}
                         className={cn(
@@ -103,7 +103,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         <Youtube className="w-4 h-4 md:w-5 md:h-5" />
                     </button>
 
-                    <div className="w-px h-8 md:h-10 bg-border mx-1 md:mx-2 flex-shrink-0" />
+                    <div className="w-px h-8 md:h-10 bg-border mx-1 md:mx-2 hidden md:block flex-shrink-0" />
 
                     <button
                         onClick={onLeave}

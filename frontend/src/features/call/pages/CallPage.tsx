@@ -356,7 +356,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
 
             {/* Participants strip (changes height based on featured content) */}
             <div
-                className={`overflow-hidden transition-all duration-300 relative ${hasFeaturedContent && !isParticipantsVisible ? 'h-0' : hasFeaturedContent ? 'h-[120px] md:h-[200px]' : 'flex-1 pb-14 md:pb-14'
+                className={`overflow-hidden transition-all duration-300 relative ${hasFeaturedContent && !isParticipantsVisible ? 'h-0' : hasFeaturedContent ? 'h-[120px] md:h-[200px]' : 'flex-1 pb-12 md:pb-14'
                     }`}
             >
                 <VideoGrid
@@ -373,7 +373,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
             {hasFeaturedContent && isParticipantsVisible && (
                 <button
                     onClick={() => setIsParticipantsVisible(false)}
-                    className="fixed bottom-[calc(48px+120px)] md:bottom-[calc(56px+200px)] left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40"
+                    className={`fixed left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 ${isMobile ? 'bottom-[calc(48px+120px)]' : 'bottom-[calc(56px+200px)]'}`}
                     title="Скрыть участников"
                 >
                     <div className="flex items-center gap-2 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
