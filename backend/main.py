@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -66,7 +67,7 @@ async def get_token(req: TokenRequest):
         .with_identity(req.participant_name)
         .with_name(req.participant_name)
         .with_grants(grant)
-        .with_ttl("24h")
+        .with_ttl(timedelta(hours=24))
     )
     
     return {"token": token.to_jwt()}
