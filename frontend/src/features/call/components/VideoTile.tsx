@@ -62,24 +62,24 @@ export const VideoTile: React.FC<VideoTileProps> = ({
                 />
             ) : (
                 <div className="flex items-center justify-center w-full h-full bg-muted">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-2xl sm:text-3xl text-muted-foreground font-semibold">
+                    <div className="w-12 h-12 md:w-16 md:h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-xl md:text-2xl sm:text-3xl text-muted-foreground font-semibold">
                             {displayName?.[0]?.toUpperCase() || '?'}
                         </span>
                     </div>
                 </div>
             )}
 
-            <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-black/80 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
-                <span className="text-white text-xs sm:text-sm font-medium flex items-center gap-1.5">
+            <div className="absolute bottom-1 left-1 md:bottom-2 md:left-2 sm:bottom-3 sm:left-3 bg-black/80 px-1.5 py-0.5 md:px-2 md:py-1 sm:px-3 sm:py-1.5 rounded md:rounded-lg">
+                <span className="text-white text-xs sm:text-sm font-medium flex items-center gap-1">
                     {!hasVideo && (
-                        <VideoOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                        <VideoOff className="w-2.5 h-2.5 md:w-3 md:h-3 sm:w-4 sm:h-4 text-red-400" />
                     )}
                     {!isMicEnabled && (
-                        <MicOff className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+                        <MicOff className="w-2.5 h-2.5 md:w-3 md:h-3 sm:w-4 sm:h-4 text-red-400" />
                     )}
-                    {displayName}
-                    {isLocal && <span className="text-gray-400 text-xs">(You)</span>}
+                    <span className="truncate max-w-[80px] md:max-w-none">{displayName}</span>
+                    {isLocal && <span className="text-gray-400 text-[10px] md:text-xs hidden md:inline">(You)</span>}
                 </span>
             </div>
 
