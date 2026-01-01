@@ -630,10 +630,7 @@ const CallPage: React.FC = () => {
                     rtcConfig: {
                         iceServers: [
                             {
-                                urls: [
-                                    'turn:212.192.217.217:3478',
-                                    'turns:212.192.217.217:5349?transport=tcp'
-                                ],
+                                urls: 'turn:212.192.217.217:3478',
                                 username: 'turnuser',
                                 credential: '4089f0b7dffe89ccb5e08998d371939c'
                             }
