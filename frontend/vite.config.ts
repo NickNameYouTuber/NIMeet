@@ -13,6 +13,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    allowedHosts: [
+      'meet.nicorp.tech',
+      'localhost',
+      '.nicorp.tech'
+    ],
     proxy: {
         '/api': {
             target: 'http://backend:8000',
