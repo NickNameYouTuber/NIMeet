@@ -627,6 +627,18 @@ const CallPage: React.FC = () => {
                     autoSubscribe: true,
                     adaptiveStream: true,
                     dynacast: true,
+                    rtcConfig: {
+                        iceServers: [
+                            {
+                                urls: [
+                                    'turn:212.192.217.217:3478',
+                                    'turns:212.192.217.217:5349?transport=tcp'
+                                ],
+                                username: 'turnuser',
+                                credential: '4089f0b7dffe89ccb5e08998d371939c'
+                            }
+                        ]
+                    }
                 }}
             >
                 <CallContent 
