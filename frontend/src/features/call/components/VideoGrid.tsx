@@ -160,10 +160,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         let bestTileWidth = 0;
         let bestTileHeight = 0;
         
-        const startCols = isMobile ? 1 : 1;
-        const endCols = isMobile ? 1 : Math.min(maxCols, participantsOnPage);
-        
-        for (let cols = startCols; cols <= endCols; cols++) {
+        for (let cols = 1; cols <= Math.min(maxCols, participantsOnPage); cols++) {
             const rows = Math.ceil(participantsOnPage / cols);
             
             if (rows > maxRows) continue;
@@ -189,6 +186,18 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
                 bestRows = rows;
                 bestTileWidth = tileWidth;
                 bestTileHeight = tileHeight;
+            }
+        }
+        
+        if (isMobile && bestCols > 1) {
+            bestCols = 1;
+            bestRows = participantsOnPage;
+            bestTileWidth = availableWidth;
+            bestTileHeight = bestTileWidth / ASPECT_RATIO;
+            const totalHeight = bestRows * bestTileHeight + (bestRows - 1) * TILE_GAP;
+            if (totalHeight > availableHeight) {
+                bestTileHeight = (availableHeight - (bestRows - 1) * TILE_GAP) / bestRows;
+                bestTileWidth = bestTileHeight * ASPECT_RATIO;
             }
         }
         

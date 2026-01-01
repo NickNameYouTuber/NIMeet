@@ -37,7 +37,7 @@ export const VideoTile: React.FC<VideoTileProps> = ({
     const hasVideo = !!cameraTrack?.publication?.track && isCameraEnabled;
 
     useEffect(() => {
-        if (!audioRef.current) return;
+        if (!audioRef.current || isLocal) return;
 
         const audioTrack = microphoneTrack?.publication?.track;
         if (audioTrack) {
@@ -46,7 +46,7 @@ export const VideoTile: React.FC<VideoTileProps> = ({
                 audioTrack.detach(audioRef.current!);
             };
         }
-    }, [microphoneTrack]);
+    }, [microphoneTrack, isLocal]);
 
     useEffect(() => {
         if (audioRef.current) {
