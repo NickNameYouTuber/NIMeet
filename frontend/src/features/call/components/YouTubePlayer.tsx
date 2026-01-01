@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link2, RefreshCw, X, Youtube } from 'lucide-react';
+import { Link2, RefreshCw, X, Youtube, Search } from 'lucide-react';
 import { useRoomContext, useLocalParticipant } from '@livekit/components-react';
 import { RoomEvent } from 'livekit-client';
 
@@ -73,6 +73,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
     const [apiReady, setApiReady] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showUrlInput, setShowUrlInput] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
 
     const playerRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -258,15 +260,23 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
         return () => clearTimeout(timer);
     }, [sendSyncMessage, isVisible]);
 
-    const handleLoadVideo = () => {
-        const id = extractVideoId(videoUrl);
+    const handleLoadVideo = (vidId?: string) => {
+        const id = vidId || extractVideoId(videoUrl);
         if (id) {
             setVideoId(id);
+            setVideoUrl(`https://youtube.com/watch?v=${id}`);
+            setShowUrlInput(false);
+            setShowSearch(false);
             sendSyncMessage({
                 type: 'youtube_sync',
-                payload: { action: 'load', videoId: id }
+                payload: { action: 'load', videoId: id, senderId: localParticipant.identity }
             });
         }
+    };
+
+    const handleSearch = () => {
+        if (!searchQuery.trim()) return;
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`, '_blank');
     };
 
     const handleSync = () => {
@@ -327,31 +337,60 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <div className="relative">
-                                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <input
-                                    type="text"
-                                    value={videoUrl}
-                                    onChange={(e) => setVideoUrl(e.target.value)}
-                                    placeholder="Paste YouTube video URL here..."
-                                    className="w-full pl-12 pr-4 py-3.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleLoadVideo()}
-                                    autoFocus
-                                />
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowSearch(false)}
+                                    className={`px-4 py-2 rounded-lg font-medium transition-all ${!showSearch ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+                                >
+                                    URL
+                                </button>
+                                <button
+                                    onClick={() => setShowSearch(true)}
+                                    className={`px-4 py-2 rounded-lg font-medium transition-all ${showSearch ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+                                >
+                                    Поиск
+                                </button>
                             </div>
+                            {!showSearch ? (
+                                <div className="relative">
+                                    <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <input
+                                        type="text"
+                                        value={videoUrl}
+                                        onChange={(e) => setVideoUrl(e.target.value)}
+                                        placeholder="Вставьте ссылку на видео YouTube..."
+                                        className="w-full pl-12 pr-4 py-3.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleLoadVideo()}
+                                        autoFocus
+                                    />
+                                </div>
+                            ) : (
+                                <div className="relative">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Поиск видео на YouTube..."
+                                        className="w-full pl-12 pr-4 py-3.5 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
                             <div className="flex gap-3">
                                 <button
                                     onClick={handleClose}
                                     className="flex-1 py-3 bg-muted hover:bg-muted/80 rounded-xl font-semibold transition-all"
                                 >
-                                    Cancel
+                                    Отмена
                                 </button>
                                 <button
-                                    onClick={handleLoadVideo}
-                                    disabled={!videoUrl || !apiReady}
+                                    onClick={() => showSearch ? handleSearch() : handleLoadVideo()}
+                                    disabled={showSearch ? !searchQuery.trim() : (!videoUrl || !apiReady)}
                                     className="flex-[2] py-3 bg-red-600 hover:bg-red-700 disabled:bg-muted disabled:text-muted-foreground text-white rounded-xl font-semibold shadow-lg shadow-red-600/20 transition-all active:scale-[0.98]"
                                 >
-                                    {apiReady ? 'Start Watching' : 'Loading API...'}
+                                    {showSearch ? 'Открыть поиск' : (apiReady ? 'Начать просмотр' : 'Загрузка API...')}
                                 </button>
                             </div>
                         </div>
