@@ -226,7 +226,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         };
     };
 
-    const gridLayout = useMemo(() => calculateGridLayout(), [containerSize, totalParticipants]);
+    const gridLayout = useMemo(() => calculateGridLayout(), [containerSize, totalParticipants, isMobile]);
 
     useEffect(() => {
         if (currentPage >= gridLayout.totalPages) {
