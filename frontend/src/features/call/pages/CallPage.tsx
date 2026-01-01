@@ -541,33 +541,7 @@ const CallPage: React.FC = () => {
     const [hasJoined, setHasJoined] = useState(false);
     const [connectionError, setConnectionError] = useState<string | null>(null);
     const [isReconnecting, setIsReconnecting] = useState(false);
-
-    const handleJoin = async (settings: { name: string, cameraEnabled: boolean, microphoneEnabled: boolean }) => {
-        try {
-            const t = await getToken(callId || 'default-room', settings.name);
-            setToken(t);
-            setHasJoined(true);
-            setConnectionError(null);
-        } catch (e) {
-            console.error("Failed to get token", e);
-            alert("Failed to join room");
-        }
-    };
-
-    if (!hasJoined) {
-        return <PreCallSetup onJoin={handleJoin} defaultName={defaultName} />;
-    }
-
-    const getServerUrl = () => {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const hostname = window.location.hostname;
-        
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'ws://localhost:7880';
-        }
-        
-        return `${protocol}//${hostname}`;
-    };
+    const isReconnectingRef = React.useRef(false);
 
     const handleDisconnected = React.useCallback((reason?: string) => {
         console.log('Disconnected from room:', reason);
@@ -599,6 +573,33 @@ const CallPage: React.FC = () => {
         setIsReconnecting(false);
         setConnectionError(null);
     }, []);
+
+    const handleJoin = async (settings: { name: string, cameraEnabled: boolean, microphoneEnabled: boolean }) => {
+        try {
+            const t = await getToken(callId || 'default-room', settings.name);
+            setToken(t);
+            setHasJoined(true);
+            setConnectionError(null);
+        } catch (e) {
+            console.error("Failed to get token", e);
+            alert("Failed to join room");
+        }
+    };
+
+    if (!hasJoined) {
+        return <PreCallSetup onJoin={handleJoin} defaultName={defaultName} />;
+    }
+
+    const getServerUrl = () => {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const hostname = window.location.hostname;
+        
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'ws://localhost:7880';
+        }
+        
+        return `${protocol}//${hostname}`;
+    };
 
     return (
         <>
