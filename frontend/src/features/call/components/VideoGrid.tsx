@@ -160,36 +160,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         let bestTileWidth = 0;
         let bestTileHeight = 0;
         
-        for (let cols = 1; cols <= Math.min(maxCols, participantsOnPage); cols++) {
-            const rows = Math.ceil(participantsOnPage / cols);
-            
-            if (rows > maxRows) continue;
-            
-            let tileWidth = (availableWidth - (cols - 1) * TILE_GAP) / cols;
-            let tileHeight = tileWidth / ASPECT_RATIO;
-            
-            const totalHeight = rows * tileHeight + (rows - 1) * TILE_GAP;
-            if (totalHeight > availableHeight) {
-                tileHeight = (availableHeight - (rows - 1) * TILE_GAP) / rows;
-                tileWidth = tileHeight * ASPECT_RATIO;
-            }
-            
-            const totalWidth = cols * tileWidth + (cols - 1) * TILE_GAP;
-            if (totalWidth > availableWidth) {
-                continue;
-            }
-            
-            const tileArea = tileWidth * tileHeight;
-            const bestArea = bestTileWidth * bestTileHeight;
-            if (tileArea > bestArea) {
-                bestCols = cols;
-                bestRows = rows;
-                bestTileWidth = tileWidth;
-                bestTileHeight = tileHeight;
-            }
-        }
-        
-        if (isMobile && bestCols > 1) {
+        if (isMobile) {
             bestCols = 1;
             bestRows = participantsOnPage;
             bestTileWidth = availableWidth;
@@ -198,6 +169,35 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
             if (totalHeight > availableHeight) {
                 bestTileHeight = (availableHeight - (bestRows - 1) * TILE_GAP) / bestRows;
                 bestTileWidth = bestTileHeight * ASPECT_RATIO;
+            }
+        } else {
+            for (let cols = 1; cols <= Math.min(maxCols, participantsOnPage); cols++) {
+                const rows = Math.ceil(participantsOnPage / cols);
+                
+                if (rows > maxRows) continue;
+                
+                let tileWidth = (availableWidth - (cols - 1) * TILE_GAP) / cols;
+                let tileHeight = tileWidth / ASPECT_RATIO;
+                
+                const totalHeight = rows * tileHeight + (rows - 1) * TILE_GAP;
+                if (totalHeight > availableHeight) {
+                    tileHeight = (availableHeight - (rows - 1) * TILE_GAP) / rows;
+                    tileWidth = tileHeight * ASPECT_RATIO;
+                }
+                
+                const totalWidth = cols * tileWidth + (cols - 1) * TILE_GAP;
+                if (totalWidth > availableWidth) {
+                    continue;
+                }
+                
+                const tileArea = tileWidth * tileHeight;
+                const bestArea = bestTileWidth * bestTileHeight;
+                if (tileArea > bestArea) {
+                    bestCols = cols;
+                    bestRows = rows;
+                    bestTileWidth = tileWidth;
+                    bestTileHeight = tileHeight;
+                }
             }
         }
         
