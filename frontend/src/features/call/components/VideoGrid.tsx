@@ -130,6 +130,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
             return { cols: 1, rows: 1, tilesPerPage: 1, totalPages: 1, tileWidth: 0, tileHeight: 0 };
         }
         
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
         const MIN_TILE_WIDTH = getMinTileWidth();
         const MIN_TILE_HEIGHT = MIN_TILE_WIDTH / ASPECT_RATIO;
         const TILE_GAP = getTileGap();
@@ -137,8 +138,13 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         const availableWidth = containerSize.width - TILE_GAP * 2;
         const availableHeight = containerSize.height - TILE_GAP * 2;
         
-        const maxCols = Math.floor((availableWidth + TILE_GAP) / (MIN_TILE_WIDTH + TILE_GAP));
-        const maxRows = Math.floor((availableHeight + TILE_GAP) / (MIN_TILE_HEIGHT + TILE_GAP));
+        let maxCols = Math.floor((availableWidth + TILE_GAP) / (MIN_TILE_WIDTH + TILE_GAP));
+        let maxRows = Math.floor((availableHeight + TILE_GAP) / (MIN_TILE_HEIGHT + TILE_GAP));
+        
+        if (isMobile) {
+            maxCols = 1;
+            maxRows = Math.min(maxRows, 4);
+        }
         
         const tilesPerPage = maxCols * maxRows;
         const totalPages = Math.ceil(totalParticipants / tilesPerPage);
