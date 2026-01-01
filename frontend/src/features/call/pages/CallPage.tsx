@@ -505,7 +505,6 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                 onSendMessage={sendMessage}
             />
 
-            <RoomAudioRenderer />
         </div>
     );
 };
