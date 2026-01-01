@@ -17,10 +17,10 @@ export const RaisedHandsBadge: React.FC<RaisedHandsBadgeProps> = ({ participants
     }
 
     return (
-        <div className="fixed bottom-20 left-4 bg-yellow-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg shadow-lg border-2 border-yellow-400 z-50 animate-pulse">
+        <div className="fixed bottom-16 md:bottom-20 left-2 md:left-4 bg-yellow-500/90 backdrop-blur-sm text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-lg border-2 border-yellow-400 z-50 animate-pulse">
             <div className="flex items-center gap-2">
-                <Hand className="w-5 h-5" />
-                <div className="text-sm font-medium">
+                <Hand className="w-4 h-4 md:w-5 md:h-5" />
+                <div className="text-xs md:text-sm font-medium">
                     {participantsWithRaisedHands.length === 1 ? (
                         <span>{participantsWithRaisedHands[0].name || participantsWithRaisedHands[0].identity} raised hand</span>
                     ) : (

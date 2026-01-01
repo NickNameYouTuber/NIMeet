@@ -182,7 +182,6 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isParticipantsVisible, setIsParticipantsVisible] = useState(true);
     const [isUiVisible, setIsUiVisible] = useState(true);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const restartIdleTimer = useCallback(() => {
@@ -205,14 +204,6 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
             events.forEach(e => window.removeEventListener(e, handleInteraction));
         };
     }, [restartIdleTimer]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     // Collect all screen share tracks
     const screenTracks = tracks
@@ -344,7 +335,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
             {hasFeaturedContent && (
                 <div
                     className="w-full bg-muted flex-shrink-0 relative transition-all duration-300"
-                    style={{ height: isParticipantsVisible ? (isMobile ? 'calc(100% - 120px - 48px)' : 'calc(100% - 200px - 56px)') : (isMobile ? 'calc(100% - 48px)' : 'calc(100% - 56px)') }}
+                    style={{ height: isParticipantsVisible ? 'calc(100% - 120px - 48px)' : 'calc(100% - 48px)' }}
                 >
                     <ContentCarousel
                         items={featuredItems}
@@ -373,7 +364,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
             {hasFeaturedContent && isParticipantsVisible && (
                 <button
                     onClick={() => setIsParticipantsVisible(false)}
-                    className={`fixed left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 ${isMobile ? 'bottom-[calc(48px+120px)]' : 'bottom-[calc(56px+200px)]'}`}
+                    className="fixed bottom-[calc(48px+120px)] md:bottom-[calc(56px+200px)] left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 min-h-[44px]"
                     title="Скрыть участников"
                 >
                     <div className="flex items-center gap-2 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
@@ -388,7 +379,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
             {hasFeaturedContent && !isParticipantsVisible && (
                 <button
                     onClick={() => setIsParticipantsVisible(true)}
-                    className="fixed bottom-12 md:bottom-14 left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40"
+                    className="fixed bottom-12 md:bottom-14 left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 min-h-[44px]"
                     title="Показать участников"
                 >
                     <div className="flex items-center gap-2 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">

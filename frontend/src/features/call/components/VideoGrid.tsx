@@ -23,35 +23,45 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
 }) => {
     const allParticipants = [localParticipant, ...participants];
     const isAlone = allParticipants.length === 1;
-    const totalCount = allParticipants.length + (isAlone && callId ? 1 : 0);
 
-    if (isAlone && callId) {
+    // Logic for grid vs filmstrip
+    if (isScreenSharing) {
+        // Filmstrip mode (horizontal list)
         return (
             <div className="w-full h-full flex items-center justify-center p-2 md:p-4 bg-background overflow-hidden relative">
-                <div className="w-full max-w-2xl flex flex-col gap-2 md:gap-4 h-full justify-center">
-                    <div className="w-full aspect-video relative">
-                        <VideoTile
-                            participant={localParticipant}
-                            isLocal={true}
-                            isCameraEnabled={localParticipant.isCameraEnabled}
-                            isMicEnabled={localParticipant.isMicrophoneEnabled}
-                            isSpeaking={speakingParticipants.has(localParticipant.identity)}
-                            isHandRaised={raisedHands.has(localParticipant.identity)}
-                        />
-                    </div>
-                    <div className="w-full aspect-video relative">
-                        <ShareLinkTile callId={callId} />
-                    </div>
+                <div className="flex gap-2 md:gap-4 overflow-x-auto w-full h-full items-center px-2 md:px-4 scrollbar-hide">
+                    {allParticipants.map((p) => (
+                        <div key={p.identity} className="flex-shrink-0 w-32 h-24 md:w-48 md:h-36 relative">
+                            <VideoTile
+                                participant={p}
+                                isLocal={p.isLocal}
+                                isCameraEnabled={p.isCameraEnabled}
+                                isMicEnabled={p.isMicrophoneEnabled}
+                                isSpeaking={speakingParticipants.has(p.identity)}
+                                isHandRaised={raisedHands.has(p.identity)}
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
         );
     }
 
+    const gridClassName = cn(
+        "grid gap-2 md:gap-4 w-full h-full p-2 md:p-4 auto-rows-fr",
+        isAlone && callId && "grid-cols-1 md:grid-cols-2",
+        !isAlone && allParticipants.length === 1 && "grid-cols-1",
+        !isAlone && allParticipants.length === 2 && "grid-cols-1 md:grid-cols-2",
+        !isAlone && allParticipants.length > 2 && allParticipants.length <= 4 && "grid-cols-1 md:grid-cols-2",
+        !isAlone && allParticipants.length > 4 && allParticipants.length <= 9 && "grid-cols-2 md:grid-cols-3",
+        !isAlone && allParticipants.length > 9 && "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+    );
+
     return (
-        <div className="w-full h-full p-2 md:p-4 bg-background overflow-auto relative">
-            <div className="max-md:grid max-md:grid-cols-4 max-md:grid-rows-2 max-md:gap-2 max-md:max-w-full max-md:h-full md:flex md:flex-wrap md:gap-4 md:justify-start md:items-start md:w-full md:content-start">
+        <div className="w-full h-full overflow-y-auto overflow-x-hidden flex items-center justify-center">
+            <div className={cn(gridClassName, "max-w-7xl max-h-full aspect-video")}>
                 {allParticipants.map((p) => (
-                    <div key={p.identity} className="max-md:w-full max-md:h-full max-md:min-h-0 max-md:aspect-video md:flex-shrink-0 md:aspect-video md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)] xl:w-[calc(25%-0.75rem)] relative">
+                    <div key={p.identity} className="w-full h-full min-h-0">
                         <VideoTile
                             participant={p}
                             isLocal={p.isLocal}
@@ -62,6 +72,11 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
                         />
                     </div>
                 ))}
+                {isAlone && callId && (
+                    <div className="w-full h-full min-h-0">
+                        <ShareLinkTile callId={callId} />
+                    </div>
+                )}
             </div>
         </div>
     );
