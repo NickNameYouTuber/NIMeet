@@ -25,7 +25,7 @@ const patchRTCPeerConnection = () => {
     const OriginalRTCPeerConnection = window.RTCPeerConnection;
     
     const ExternalTurnServer: RTCIceServer = {
-        urls: 'turn:212.192.217.217:3478',
+        urls: ['turn:212.192.217.217:3478'],
         username: 'turnuser',
         credential: '4089f0b7dffe89ccb5e08998d371939c'
     };
