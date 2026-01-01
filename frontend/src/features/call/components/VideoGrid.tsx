@@ -23,12 +23,49 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
 }) => {
     const allParticipants = [localParticipant, ...participants];
     const isAlone = allParticipants.length === 1;
+    const totalCount = allParticipants.length + (isAlone && callId ? 1 : 0);
+
+    if (isAlone && callId) {
+        return (
+            <div className="w-full h-full flex items-center justify-center p-2 md:p-4 bg-background overflow-hidden relative">
+                <div className="w-full max-w-2xl flex flex-col gap-2 md:gap-4 h-full justify-center">
+                    <div className="w-full h-32 md:h-48 relative">
+                        <VideoTile
+                            participant={localParticipant}
+                            isLocal={true}
+                            isCameraEnabled={localParticipant.isCameraEnabled}
+                            isMicEnabled={localParticipant.isMicrophoneEnabled}
+                            isSpeaking={speakingParticipants.has(localParticipant.identity)}
+                            isHandRaised={raisedHands.has(localParticipant.identity)}
+                        />
+                    </div>
+                    <div className="w-full h-32 md:h-48 relative">
+                        <ShareLinkTile callId={callId} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const getGridClasses = () => {
+        if (totalCount <= 4) {
+            return cn(
+                "grid gap-2 md:gap-4 w-full max-w-4xl h-full",
+                totalCount === 1 && "grid-cols-1",
+                totalCount === 2 && "grid-cols-2",
+                totalCount === 3 && "grid-cols-3",
+                totalCount === 4 && "grid-cols-4"
+            );
+        } else {
+            return "grid grid-cols-4 grid-rows-2 gap-2 md:gap-4 w-full max-w-4xl h-full";
+        }
+    };
 
     return (
         <div className="w-full h-full flex items-center justify-center p-2 md:p-4 bg-background overflow-hidden relative">
-            <div className="flex gap-2 md:gap-4 overflow-x-auto w-full h-full items-center px-2 md:px-4 scrollbar-hide">
+            <div className={getGridClasses()}>
                 {allParticipants.map((p) => (
-                    <div key={p.identity} className="flex-shrink-0 w-32 h-24 md:w-48 md:h-36 relative">
+                    <div key={p.identity} className="w-full h-full min-h-0 relative">
                         <VideoTile
                             participant={p}
                             isLocal={p.isLocal}
@@ -39,11 +76,6 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
                         />
                     </div>
                 ))}
-                {isAlone && callId && (
-                    <div className="flex-shrink-0 w-32 h-24 md:w-48 md:h-36 relative">
-                        <ShareLinkTile callId={callId} />
-                    </div>
-                )}
             </div>
         </div>
     );

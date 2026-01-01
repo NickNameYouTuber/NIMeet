@@ -34,17 +34,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
     return (
         <div className={cn(
-            "fixed inset-0 md:top-0 md:right-0 md:left-auto md:bottom-0 md:h-full w-full md:w-80 bg-card md:border-l border-border shadow-lg transform transition-transform duration-300 ease-in-out z-40 flex flex-col pt-12 md:pt-16 pb-20",
+            "fixed inset-0 md:top-0 md:right-0 md:left-auto md:bottom-0 md:h-full w-full md:w-80 bg-card md:border-l border-border shadow-lg transform transition-transform duration-300 ease-in-out z-40 flex flex-col",
             isOpen ? "translate-x-0" : "translate-x-full"
         )}>
-            <div className="flex items-center justify-between px-2 md:px-4 py-2 border-b border-border">
+            <div className="flex items-center justify-between px-2 md:px-4 py-3 md:py-2 border-b border-border flex-shrink-0">
                 <h3 className="font-semibold text-base md:text-lg">In-Call Messages</h3>
                 <button onClick={onClose} className="p-1 hover:bg-secondary rounded">
                     <X className="w-5 h-5" />
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-4 min-h-0">
                 {messages.map((msg) => (
                     <div key={msg.id} className="flex flex-col">
                         <div className="flex items-baseline gap-2">
@@ -56,19 +56,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 ))}
             </div>
 
-            <form onSubmit={handleSend} className="p-2 md:p-4 border-t border-border bg-card">
-                <div className="flex gap-2">
-                    <input
-                        className="flex-1 bg-secondary rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                        placeholder="Type a message..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                    />
-                    <button type="submit" className="bg-primary text-primary-foreground p-2 rounded-md hover:bg-primary/90">
-                        <Send className="w-4 h-4" />
-                    </button>
-                </div>
-            </form>
+            <div className="border-t border-border bg-card flex-shrink-0 pb-12 md:pb-0">
+                <form onSubmit={handleSend} className="p-2 md:p-4">
+                    <div className="flex gap-2">
+                        <input
+                            className="flex-1 bg-secondary rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            placeholder="Type a message..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                        />
+                        <button type="submit" className="bg-primary text-primary-foreground p-2 rounded-md hover:bg-primary/90 flex-shrink-0">
+                            <Send className="w-4 h-4" />
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
