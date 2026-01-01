@@ -532,6 +532,50 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     );
 };
 
+const patchRTCPeerConnection = () => {
+    if (typeof window === 'undefined' || !window.RTCPeerConnection) {
+        return;
+    }
+    
+    const OriginalRTCPeerConnection = window.RTCPeerConnection;
+    
+    const ExternalTurnServer: RTCIceServer = {
+        urls: 'turn:212.192.217.217:3478',
+        username: 'turnuser',
+        credential: '4089f0b7dffe89ccb5e08998d371939c'
+    };
+    
+    const PatchedRTCPeerConnection = function(this: RTCPeerConnection, configuration?: RTCConfiguration): RTCPeerConnection {
+        const existingIceServers = configuration?.iceServers || [];
+        
+        const customIceServers: RTCIceServer[] = [
+            ExternalTurnServer,
+            ...existingIceServers
+        ];
+        
+        const patchedConfiguration: RTCConfiguration = {
+            ...configuration,
+            iceServers: customIceServers
+        };
+        
+        return new OriginalRTCPeerConnection(patchedConfiguration);
+    };
+    
+    PatchedRTCPeerConnection.prototype = OriginalRTCPeerConnection.prototype;
+    Object.setPrototypeOf(PatchedRTCPeerConnection, OriginalRTCPeerConnection);
+    
+    Object.getOwnPropertyNames(OriginalRTCPeerConnection).forEach(name => {
+        if (name !== 'prototype' && name !== 'length' && name !== 'name') {
+            try {
+                (PatchedRTCPeerConnection as any)[name] = (OriginalRTCPeerConnection as any)[name];
+            } catch (e) {
+            }
+        }
+    });
+    
+    window.RTCPeerConnection = PatchedRTCPeerConnection as any;
+};
+
 const CallPage: React.FC = () => {
     const { callId } = useParams<{ callId: string }>();
     const [searchParams] = useSearchParams();
@@ -542,6 +586,14 @@ const CallPage: React.FC = () => {
     const [connectionError, setConnectionError] = useState<string | null>(null);
     const [isReconnecting, setIsReconnecting] = useState(false);
     const isReconnectingRef = React.useRef(false);
+    const isPatchedRef = React.useRef(false);
+
+    React.useEffect(() => {
+        if (!isPatchedRef.current) {
+            patchRTCPeerConnection();
+            isPatchedRef.current = true;
+        }
+    }, []);
 
     const handleDisconnected = React.useCallback((reason?: string) => {
         console.log('Disconnected from room:', reason);
@@ -626,17 +678,7 @@ const CallPage: React.FC = () => {
                 options={{
                     autoSubscribe: true,
                     adaptiveStream: true,
-                    dynacast: true,
-                    rtcConfig: {
-                        iceServers: [
-                            {
-                                urls: ['turn:212.192.217.217:3478'],
-                                username: 'turnuser',
-                                credential: '4089f0b7dffe89ccb5e08998d371939c'
-                            }
-                        ],
-                        iceTransportPolicy: 'relay' as RTCIceTransportPolicy
-                    }
+                    dynacast: true
                 }}
             >
                 <CallContent 
