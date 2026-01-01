@@ -8,7 +8,7 @@ import {
     useParticipants,
     RoomAudioRenderer,
 } from '@livekit/components-react';
-import { Track, RoomEvent, Participant } from 'livekit-client';
+import { Track, RoomEvent, Participant, ConnectionState } from 'livekit-client';
 import '@livekit/components-styles';
 
 import { PreCallSetup } from '../components/PreCallSetup';
@@ -305,22 +305,24 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
 
     // Reconnection handling
     useEffect(() => {
-        const handleReconnecting = () => {
-            console.log('Reconnecting to room...');
-            if (onReconnecting) onReconnecting();
+        const handleConnectionStateChanged = (state: ConnectionState) => {
+            console.log('Connection state changed:', state);
+            if (state === ConnectionState.Reconnecting) {
+                if (onReconnecting) onReconnecting();
+            } else if (state === ConnectionState.Connected) {
+                if (onReconnected) onReconnected();
+            }
         };
 
-        const handleReconnected = () => {
-            console.log('Reconnected to room');
-            if (onReconnected) onReconnected();
-        };
+        room.on(RoomEvent.ConnectionStateChanged, handleConnectionStateChanged);
 
-        room.on(RoomEvent.Reconnecting, handleReconnecting);
-        room.on(RoomEvent.Reconnected, handleReconnected);
+        // Check initial state
+        if (room.state === ConnectionState.Reconnecting && onReconnecting) {
+            onReconnecting();
+        }
 
         return () => {
-            room.off(RoomEvent.Reconnecting, handleReconnecting);
-            room.off(RoomEvent.Reconnected, handleReconnected);
+            room.off(RoomEvent.ConnectionStateChanged, handleConnectionStateChanged);
         };
     }, [room, onReconnecting, onReconnected]);
 
