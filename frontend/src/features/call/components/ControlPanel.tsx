@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ControlPanelProps {
@@ -15,6 +15,7 @@ interface ControlPanelProps {
     onToggleChat: () => void;
     onToggleRaiseHand: () => void;
     onToggleYouTube: () => void;
+    onOpenSettings: () => void;
     onLeave: () => void;
 }
 
@@ -31,6 +32,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     onToggleChat,
     onToggleRaiseHand,
     onToggleYouTube,
+    onOpenSettings,
     onLeave,
 }) => {
     return (
@@ -101,6 +103,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         title="Watch Together"
                     >
                         <Youtube className="w-5 h-5" />
+                    </button>
+
+                    <button
+                        onClick={onOpenSettings}
+                        className="p-2 md:p-3 rounded-full bg-secondary hover:bg-secondary/80 text-foreground transition-colors flex-shrink-0"
+                        title="Настройки устройств"
+                    >
+                        <Settings className="w-5 h-5" />
                     </button>
 
                     <div className="w-px h-8 md:h-10 bg-border mx-1 md:mx-2 flex-shrink-0" />

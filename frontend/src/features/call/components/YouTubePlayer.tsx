@@ -7,6 +7,7 @@ interface YouTubePlayerProps {
     onClose: () => void;
     isVisible: boolean;
     isUiVisible: boolean;
+    isCreator: boolean;
 }
 
 interface YouTubeSyncMessage {
@@ -63,7 +64,7 @@ const loadYouTubeAPI = (): Promise<void> => {
     });
 };
 
-export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible, isUiVisible }) => {
+export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible, isUiVisible, isCreator }) => {
     const room = useRoomContext();
     const { localParticipant } = useLocalParticipant();
 
@@ -111,10 +112,15 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
                 controls: 1,
                 modestbranding: 1,
                 rel: 0,
+                enablejsapi: 1,
             },
             events: {
                 onReady: () => {
                     setShowUrlInput(false);
+                    if (isCreator && playerRef.current) {
+                        playerRef.current.unMute();
+                        playerRef.current.setVolume(100);
+                    }
                 },
                 onStateChange: (event: any) => {
                     if (ignoreNextStateChange.current) {
@@ -146,7 +152,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
                 playerRef.current = null;
             }
         };
-    }, [apiReady, videoId, sendSyncMessage]);
+    }, [apiReady, videoId, sendSyncMessage, isCreator]);
 
     // Handle incoming sync messages
     useEffect(() => {
@@ -270,7 +276,9 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
     };
 
     const handleClose = () => {
-        sendSyncMessage({ type: 'youtube_sync', payload: { action: 'close' } });
+        if (isCreator) {
+            sendSyncMessage({ type: 'youtube_sync', payload: { action: 'close', senderId: localParticipant.identity } });
+        }
         onClose();
     };
 
@@ -357,10 +365,10 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
                 className="w-full h-full"
             />
 
-            {/* Bottom-right Change Video button */}
+            {/* Top-right Change Video button */}
             {videoId && !showUrlInput && (
                 <div
-                    className={`absolute bottom-6 right-6 z-10 transition-all duration-500 ease-in-out ${isUiVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    className={`absolute top-20 right-6 z-10 transition-all duration-500 ease-in-out ${isUiVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                         }`}
                 >
                     <button

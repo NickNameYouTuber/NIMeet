@@ -11,6 +11,8 @@ interface VideoGridProps {
     raisedHands: Set<string>;
     isScreenSharing: boolean;
     callId?: string;
+    participantVolumes?: Map<string, number>;
+    onVolumeChange?: (participantId: string, volume: number) => void;
 }
 
 interface GridLayout {
@@ -46,6 +48,8 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
     raisedHands,
     isScreenSharing,
     callId,
+    participantVolumes = new Map(),
+    onVolumeChange,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -250,6 +254,8 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
                                 isMicEnabled={p.isMicrophoneEnabled}
                                 isSpeaking={speakingParticipants.has(p.identity)}
                                 isHandRaised={raisedHands.has(p.identity)}
+                                volume={participantVolumes.get(p.identity) ?? 1.0}
+                                onVolumeChange={onVolumeChange ? (volume) => onVolumeChange(p.identity, volume) : undefined}
                             />
                         </div>
                     ))}
@@ -333,6 +339,8 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
                                             isMicEnabled={participant.isMicrophoneEnabled}
                                             isSpeaking={speakingParticipants.has(participant.identity)}
                                             isHandRaised={raisedHands.has(participant.identity)}
+                                            volume={participantVolumes.get(participant.identity) ?? 1.0}
+                                            onVolumeChange={onVolumeChange ? (volume) => onVolumeChange(participant.identity, volume) : undefined}
                                         />
                                     )}
                                 </div>

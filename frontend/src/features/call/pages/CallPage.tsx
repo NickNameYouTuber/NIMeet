@@ -17,6 +17,7 @@ import { ControlPanel } from '../components/ControlPanel';
 import { ChatPanel } from '../components/ChatPanel';
 import { RaisedHandsBadge } from '../components/RaisedHandsBadge';
 import { YouTubePlayer } from '../components/YouTubePlayer';
+import { DeviceSettings } from '../components/DeviceSettings';
 import { getToken } from '@/services/api';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Monitor } from 'lucide-react';
 
@@ -39,7 +40,7 @@ type FeaturedItem =
     | { type: 'youtube' };
 
 // Carousel Item Component
-const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClose }: { item: FeaturedItem, isActive: boolean, isUiVisible: boolean, total: number, index: number, onYouTubeClose: () => void }) => {
+const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClose, youtubeCreatorId, localParticipantId }: { item: FeaturedItem, isActive: boolean, isUiVisible: boolean, total: number, index: number, onYouTubeClose: () => void, youtubeCreatorId: string | null, localParticipantId: string }) => {
     const videoRef = React.useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
@@ -58,6 +59,7 @@ const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClos
                     onClose={onYouTubeClose}
                     isVisible={isActive}
                     isUiVisible={isUiVisible}
+                    isCreator={youtubeCreatorId === localParticipantId}
                 />
             </div>
         );
@@ -90,7 +92,7 @@ const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClos
 };
 
 // Content Carousel Component
-const ContentCarousel = ({ items, onYouTubeClose, isUiVisible }: { items: FeaturedItem[], onYouTubeClose: () => void, isUiVisible: boolean }) => {
+const ContentCarousel = ({ items, onYouTubeClose, isUiVisible, youtubeCreatorId, localParticipantId }: { items: FeaturedItem[], onYouTubeClose: () => void, isUiVisible: boolean, youtubeCreatorId: string | null, localParticipantId: string }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Sync currentIndex with items length
@@ -129,6 +131,8 @@ const ContentCarousel = ({ items, onYouTubeClose, isUiVisible }: { items: Featur
                     total={items.length}
                     index={idx}
                     onYouTubeClose={onYouTubeClose}
+                    youtubeCreatorId={youtubeCreatorId}
+                    localParticipantId={localParticipantId}
                 />
             ))}
 
@@ -177,12 +181,15 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
     // States
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isYouTubeActive, setIsYouTubeActive] = useState(false);
+    const [youtubeCreatorId, setYoutubeCreatorId] = useState<string | null>(null);
     const [speakingParticipants, setSpeakingParticipants] = useState<Set<string>>(new Set());
     const [raisedHands, setRaisedHands] = useState<Set<string>>(new Set());
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isParticipantsVisible, setIsParticipantsVisible] = useState(true);
     const [isUiVisible, setIsUiVisible] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
+    const [participantVolumes, setParticipantVolumes] = useState<Map<string, number>>(new Map());
     const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const restartIdleTimer = useCallback(() => {
@@ -258,11 +265,17 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                         return next;
                     });
                 } else if ((message as any).type === 'youtube_sync') {
-                    const { action } = (message as any).payload;
+                    const { action, senderId } = (message as any).payload;
                     if (action === 'load' || action === 'sync_response') {
                         setIsYouTubeActive(true);
+                        if (action === 'load' && senderId && !youtubeCreatorId) {
+                            setYoutubeCreatorId(senderId);
+                        }
                     } else if (action === 'close') {
                         setIsYouTubeActive(false);
+                        if (senderId === youtubeCreatorId) {
+                            setYoutubeCreatorId(null);
+                        }
                     }
                 }
             } catch (e) {
@@ -272,7 +285,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
 
         room.on(RoomEvent.DataReceived, handleDataReceived);
         return () => { room.off(RoomEvent.DataReceived, handleDataReceived); };
-    }, [room]);
+    }, [room, youtubeCreatorId, decoder]);
 
     // Speaking detection
     useEffect(() => {
@@ -312,6 +325,33 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
         });
     };
 
+    const handleToggleYouTube = () => {
+        if (!isYouTubeActive) {
+            setIsYouTubeActive(true);
+            setYoutubeCreatorId(localParticipant.identity);
+        } else {
+            if (youtubeCreatorId === localParticipant.identity) {
+                sendDataMessage({
+                    type: 'youtube_sync',
+                    payload: { action: 'close', senderId: localParticipant.identity }
+                });
+                setIsYouTubeActive(false);
+                setYoutubeCreatorId(null);
+            }
+        }
+    };
+
+    const handleYouTubeClose = () => {
+        if (youtubeCreatorId === localParticipant.identity) {
+            sendDataMessage({
+                type: 'youtube_sync',
+                payload: { action: 'close', senderId: localParticipant.identity }
+            });
+            setYoutubeCreatorId(null);
+        }
+        setIsYouTubeActive(false);
+    };
+
     const sendMessage = (text: string) => {
         // Add to local messages
         const msg: ChatMessage = {
@@ -347,7 +387,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                         height: isParticipantsVisible
                             ? isMobile
                                 ? 'calc(100% - 120px - 48px)'
-                                : 'calc(100% - 200px - 56px)'
+                                : 'calc(100% - 160px - 56px)'
                             : isMobile
                                 ? 'calc(100% - 48px)'
                                 : 'calc(100% - 56px)'
@@ -355,15 +395,17 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                 >
                     <ContentCarousel
                         items={featuredItems}
-                        onYouTubeClose={() => setIsYouTubeActive(false)}
+                        onYouTubeClose={handleYouTubeClose}
                         isUiVisible={isUiVisible}
+                        youtubeCreatorId={youtubeCreatorId}
+                        localParticipantId={localParticipant.identity}
                     />
                 </div>
             )}
 
             {/* Participants strip (changes height based on featured content) */}
             <div
-                className={`overflow-hidden transition-all duration-300 relative ${hasFeaturedContent && !isParticipantsVisible ? 'h-0' : hasFeaturedContent ? 'h-[120px] md:h-[200px]' : 'flex-1 pb-12 md:pb-14'
+                className={`overflow-hidden transition-all duration-300 relative ${hasFeaturedContent && !isParticipantsVisible ? 'h-0' : hasFeaturedContent ? 'h-[120px] md:h-[160px]' : 'flex-1 pb-12 md:pb-14'
                     }`}
             >
                 <VideoGrid
@@ -373,6 +415,14 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                     raisedHands={raisedHands}
                     isScreenSharing={hasFeaturedContent}
                     callId={callId}
+                    participantVolumes={participantVolumes}
+                    onVolumeChange={(participantId, volume) => {
+                        setParticipantVolumes(prev => {
+                            const next = new Map(prev);
+                            next.set(participantId, volume);
+                            return next;
+                        });
+                    }}
                 />
             </div>
 
@@ -380,7 +430,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
             {hasFeaturedContent && isParticipantsVisible && (
                 <button
                     onClick={() => setIsParticipantsVisible(false)}
-                    className="fixed bottom-[calc(48px+120px)] md:bottom-[calc(56px+200px)] left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 min-h-[44px]"
+                    className="fixed bottom-[calc(48px+120px)] md:bottom-[calc(56px+160px)] left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 min-h-[44px]"
                     title="Скрыть участников"
                 >
                     <div className="flex items-center gap-2 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
@@ -425,10 +475,17 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                     onToggleScreenShare={toggleScreenShare}
                     onToggleChat={() => setIsChatOpen(!isChatOpen)}
                     onToggleRaiseHand={toggleRaiseHand}
-                    onToggleYouTube={() => setIsYouTubeActive(!isYouTubeActive)}
+                    onToggleYouTube={handleToggleYouTube}
+                    onOpenSettings={() => setIsDeviceSettingsOpen(true)}
                     onLeave={onLeave}
                 />
             </div>
+
+            {/* Device Settings */}
+            <DeviceSettings
+                isOpen={isDeviceSettingsOpen}
+                onClose={() => setIsDeviceSettingsOpen(false)}
+            />
 
             {/* Side Chat */}
             <ChatPanel
@@ -438,7 +495,6 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                 onSendMessage={sendMessage}
             />
 
-            <RoomAudioRenderer />
         </div>
     );
 };
