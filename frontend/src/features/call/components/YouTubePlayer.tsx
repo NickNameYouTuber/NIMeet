@@ -418,26 +418,6 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
                 ref={containerRef}
                 className="w-full h-full"
             />
-
-            {/* Top-right Change Video button */}
-            {videoId && !showUrlInput && (
-                <div
-                    className={`absolute top-20 right-6 z-10 transition-all duration-500 ease-in-out ${isUiVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                        }`}
-                >
-                    <button
-                        onClick={() => {
-                            setVideoId(null);
-                            setVideoUrl('');
-                            setShowUrlInput(true);
-                        }}
-                        className="bg-background/90 backdrop-blur-sm rounded-xl px-5 py-3 text-sm font-bold hover:bg-background transition-all shadow-2xl border border-border/50 flex items-center gap-2 group active:scale-95"
-                    >
-                        <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
-                        Change Video
-                    </button>
-                </div>
-            )}
         </div>
     );
 };
