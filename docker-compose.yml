@@ -6,9 +6,9 @@ services:
     image: livekit/livekit-server:latest
     command: --config /etc/livekit.yaml
     ports:
-      - "7672:7880"
-      - "7673:7881"
-      - "7674:7882/udp"
+      - "7552:7880"
+      - "7553:7881"
+      - "7554:7882/udp"
     volumes:
       - ./livekit/livekit.yaml:/etc/livekit.yaml
     depends_on:
@@ -29,7 +29,7 @@ services:
     build: ./backend
     restart: unless-stopped
     ports:
-      - "7670:8000"
+      - "7550:8000"
     environment:
       - LIVEKIT_API_URL=ws://livekit:7880
       - LIVEKIT_API_KEY=devkey
@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     working_dir: /app
     ports:
-      - "7671:5173"
+      - "7551:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
