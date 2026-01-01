@@ -6,13 +6,11 @@ services:
     image: livekit/livekit-server:latest
     command: --config /etc/livekit.yaml
     ports:
-      - "7880:7880"
-      - "7881:7881"
-      - "7882:7882/udp"
+      - "7672:7880"
+      - "7673:7881"
+      - "7674:7882/udp"
     volumes:
       - ./livekit/livekit.yaml:/etc/livekit.yaml
-    # environment:
-    #   - LIVEKIT_KEYS_devkey=secret
     depends_on:
       - redis
     networks:
@@ -21,8 +19,8 @@ services:
   # Redis for LiveKit Room State
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     networks:
       - conference-net
 
@@ -31,7 +29,7 @@ services:
     build: ./backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "7670:8000"
     environment:
       - LIVEKIT_API_URL=ws://livekit:7880
       - LIVEKIT_API_KEY=devkey
@@ -43,21 +41,19 @@ services:
     networks:
       - conference-net
 
-  # Frontend (Dev mode)
-  # In a real prod setup, this would be an Nginx serving the build
+  # Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    # image: node:18-alpine # Removed in favor of build
     working_dir: /app
     ports:
-      - "5173:5173"
+      - "7671:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules # Anonymous volume to preserve image node_modules
+      - /app/node_modules
     environment:
-      - CHOKIDAR_USEPOLLING=true # Essential for hot reload on Windows mounts
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
     networks:
