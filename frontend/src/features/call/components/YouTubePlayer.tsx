@@ -8,6 +8,7 @@ interface YouTubePlayerProps {
     isVisible: boolean;
     isUiVisible: boolean;
     isCreator: boolean;
+    onChangeVideo?: () => void;
 }
 
 interface YouTubeSyncMessage {
@@ -64,7 +65,7 @@ const loadYouTubeAPI = (): Promise<void> => {
     });
 };
 
-export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible, isUiVisible, isCreator }) => {
+export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible, isUiVisible, isCreator, onChangeVideo }) => {
     const room = useRoomContext();
     const { localParticipant } = useLocalParticipant();
 
@@ -273,6 +274,20 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ onClose, isVisible
             });
         }
     };
+
+    useEffect(() => {
+        if (onChangeVideo) {
+            const openChangeVideo = () => {
+                setVideoId(null);
+                setVideoUrl('');
+                setShowUrlInput(true);
+            };
+            (window as any).__youtubeChangeVideo = openChangeVideo;
+            return () => {
+                delete (window as any).__youtubeChangeVideo;
+            };
+        }
+    }, [onChangeVideo]);
 
     const handleSearch = () => {
         if (!searchQuery.trim()) return;

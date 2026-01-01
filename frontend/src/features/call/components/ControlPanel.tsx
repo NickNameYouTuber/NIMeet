@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ControlPanelProps {
@@ -16,6 +16,7 @@ interface ControlPanelProps {
     onToggleRaiseHand: () => void;
     onToggleYouTube: () => void;
     onOpenSettings: () => void;
+    onYouTubeChangeVideo?: () => void;
     onLeave: () => void;
 }
 
@@ -33,12 +34,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     onToggleRaiseHand,
     onToggleYouTube,
     onOpenSettings,
+    onYouTubeChangeVideo,
     onLeave,
 }) => {
     return (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50 py-2 md:py-3">
             <div className="max-w-7xl mx-auto px-2 md:px-4">
-                <div className="flex gap-2 md:gap-4 overflow-x-auto scrollbar-hide justify-start md:justify-center pb-1 md:pb-0">
+                <div className="flex gap-2 md:gap-4 overflow-x-auto scrollbar-hide justify-between items-center pb-1 md:pb-0">
+                    <div className="flex gap-2 md:gap-4">
                     <button
                         onClick={onToggleMicrophone}
                         className={cn(
@@ -112,16 +115,29 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     >
                         <Settings className="w-5 h-5" />
                     </button>
+                    </div>
 
-                    <div className="w-px h-8 md:h-10 bg-border mx-1 md:mx-2 flex-shrink-0" />
+                    <div className="flex gap-2 md:gap-4 items-center">
+                        {isYouTubeActive && onYouTubeChangeVideo && (
+                            <button
+                                onClick={onYouTubeChangeVideo}
+                                className="p-2 md:p-3 rounded-full bg-secondary hover:bg-secondary/80 text-foreground transition-colors flex-shrink-0"
+                                title="Сменить видео"
+                            >
+                                <RefreshCw className="w-5 h-5" />
+                            </button>
+                        )}
 
-                    <button
-                        onClick={onLeave}
-                        className="p-2 md:p-3 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors flex-shrink-0"
-                        title="Leave Call"
-                    >
-                        <PhoneOff className="w-5 h-5" />
-                    </button>
+                        <div className="w-px h-8 md:h-10 bg-border mx-1 md:mx-2 flex-shrink-0" />
+
+                        <button
+                            onClick={onLeave}
+                            className="p-2 md:p-3 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors flex-shrink-0"
+                            title="Leave Call"
+                        >
+                            <PhoneOff className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

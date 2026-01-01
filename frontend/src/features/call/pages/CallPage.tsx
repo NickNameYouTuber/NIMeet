@@ -60,6 +60,11 @@ const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClos
                     isVisible={isActive}
                     isUiVisible={isUiVisible}
                     isCreator={youtubeCreatorId === localParticipantId}
+                    onChangeVideo={() => {
+                        if ((window as any).__youtubeChangeVideo) {
+                            (window as any).__youtubeChangeVideo();
+                        }
+                    }}
                 />
             </div>
         );
@@ -477,6 +482,11 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
                     onToggleRaiseHand={toggleRaiseHand}
                     onToggleYouTube={handleToggleYouTube}
                     onOpenSettings={() => setIsDeviceSettingsOpen(true)}
+                    onYouTubeChangeVideo={isYouTubeActive && youtubeCreatorId === localParticipant.identity ? () => {
+                        if ((window as any).__youtubeChangeVideo) {
+                            (window as any).__youtubeChangeVideo();
+                        }
+                    } : undefined}
                     onLeave={onLeave}
                 />
             </div>
