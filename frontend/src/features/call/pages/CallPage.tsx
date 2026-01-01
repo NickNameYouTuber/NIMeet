@@ -458,7 +458,7 @@ const CallPage: React.FC = () => {
             return 'ws://localhost:7880';
         }
         
-        return `${protocol}//${hostname}/rtc`;
+        return `${protocol}//${hostname}`;
     };
 
     return (
