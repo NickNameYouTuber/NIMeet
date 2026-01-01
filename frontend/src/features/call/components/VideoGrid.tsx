@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Participant } from 'livekit-client';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { VideoTile } from './VideoTile';
 import { ShareLinkTile } from './ShareLinkTile';
 
@@ -58,6 +58,10 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
     const [currentPage, setCurrentPage] = useState(0);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
+    const [canScrollUp, setCanScrollUp] = useState(false);
+    const [canScrollDown, setCanScrollDown] = useState(false);
+    
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
     useEffect(() => {
         const updateSize = () => {
@@ -90,10 +94,17 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
             const container = scrollContainerRef.current;
             if (!container) return;
             
-            setCanScrollLeft(container.scrollLeft > 0);
-            setCanScrollRight(
-                container.scrollLeft < container.scrollWidth - container.clientWidth - 1
-            );
+            if (isMobile) {
+                setCanScrollUp(container.scrollTop > 0);
+                setCanScrollDown(
+                    container.scrollTop < container.scrollHeight - container.clientHeight - 1
+                );
+            } else {
+                setCanScrollLeft(container.scrollLeft > 0);
+                setCanScrollRight(
+                    container.scrollLeft < container.scrollWidth - container.clientWidth - 1
+                );
+            }
         };
         
         checkScroll();
@@ -103,7 +114,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         return () => {
             container.removeEventListener('scroll', checkScroll);
         };
-    }, [isScreenSharing, containerSize]);
+    }, [isScreenSharing, containerSize, isMobile]);
 
     const sortedParticipants = useMemo(() => {
         const all = [localParticipant, ...participants];
@@ -133,8 +144,6 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         if (containerSize.width === 0 || containerSize.height === 0) {
             return { cols: 1, rows: 1, tilesPerPage: 1, totalPages: 1, tileWidth: 0, tileHeight: 0 };
         }
-        
-        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
         const MIN_TILE_WIDTH = getMinTileWidth();
         const MIN_TILE_HEIGHT = MIN_TILE_WIDTH / ASPECT_RATIO;
         const TILE_GAP = getTileGap();
@@ -241,57 +250,124 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         }
     };
 
+    const handleScrollUp = () => {
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            container.scrollBy({ top: -container.clientHeight * 0.8, behavior: 'smooth' });
+        }
+    };
+
+    const handleScrollDown = () => {
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            container.scrollBy({ top: container.clientHeight * 0.8, behavior: 'smooth' });
+        }
+    };
+
     if (isScreenSharing) {
         const TILE_GAP = getTileGap();
-        const tileHeight = containerSize.height > 0 ? containerSize.height - TILE_GAP * 2 : 144;
-        const tileWidth = tileHeight * ASPECT_RATIO;
         
-        return (
-            <div ref={containerRef} className="relative h-full w-full bg-background flex items-center">
-                <div
-                    ref={scrollContainerRef}
-                    className="flex gap-3 p-4 overflow-x-auto overflow-y-hidden h-full w-full scrollbar-hide"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                    {sortedParticipants.map((p) => (
-                        <div
-                            key={p.identity}
-                            className="flex-shrink-0 h-full relative"
-                            style={{ width: `${tileWidth}px` }}
+        if (isMobile) {
+            const tileWidth = containerSize.width > 0 ? containerSize.width - TILE_GAP * 2 : 200;
+            const tileHeight = tileWidth / ASPECT_RATIO;
+            
+            return (
+                <div ref={containerRef} className="relative h-full w-full bg-background flex items-center">
+                    <div
+                        ref={scrollContainerRef}
+                        className="flex flex-col gap-3 p-4 overflow-y-auto overflow-x-hidden h-full w-full scrollbar-hide"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {sortedParticipants.map((p) => (
+                            <div
+                                key={p.identity}
+                                className="flex-shrink-0 w-full relative"
+                                style={{ height: `${tileHeight}px` }}
+                            >
+                                <VideoTile
+                                    participant={p}
+                                    isLocal={p.isLocal}
+                                    isCameraEnabled={p.isCameraEnabled}
+                                    isMicEnabled={p.isMicrophoneEnabled}
+                                    isSpeaking={speakingParticipants.has(p.identity)}
+                                    isHandRaised={raisedHands.has(p.identity)}
+                                    volume={participantVolumes.get(p.identity) ?? 1.0}
+                                    onVolumeChange={onVolumeChange ? (volume) => onVolumeChange(p.identity, volume) : undefined}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    {canScrollUp && (
+                        <button
+                            onClick={handleScrollUp}
+                            className="absolute left-1/2 -translate-x-1/2 top-2 bg-black/80 hover:bg-black/90 text-white p-2 rounded-full transition z-10 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            aria-label="Прокрутить вверх"
                         >
-                            <VideoTile
-                                participant={p}
-                                isLocal={p.isLocal}
-                                isCameraEnabled={p.isCameraEnabled}
-                                isMicEnabled={p.isMicrophoneEnabled}
-                                isSpeaking={speakingParticipants.has(p.identity)}
-                                isHandRaised={raisedHands.has(p.identity)}
-                                volume={participantVolumes.get(p.identity) ?? 1.0}
-                                onVolumeChange={onVolumeChange ? (volume) => onVolumeChange(p.identity, volume) : undefined}
-                            />
-                        </div>
-                    ))}
+                            <ChevronUp className="w-5 h-5" />
+                        </button>
+                    )}
+                    {canScrollDown && (
+                        <button
+                            onClick={handleScrollDown}
+                            className="absolute left-1/2 -translate-x-1/2 bottom-2 bg-black/80 hover:bg-black/90 text-white p-2 rounded-full transition z-10 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            aria-label="Прокрутить вниз"
+                        >
+                            <ChevronDown className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
-                {canScrollLeft && (
-                    <button
-                        onClick={handleScrollLeft}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black/90 text-white p-2 rounded-full transition z-10 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        aria-label="Прокрутить влево"
+            );
+        } else {
+            const tileHeight = containerSize.height > 0 ? containerSize.height - TILE_GAP * 2 : 144;
+            const tileWidth = tileHeight * ASPECT_RATIO;
+            
+            return (
+                <div ref={containerRef} className="relative h-full w-full bg-background flex items-center">
+                    <div
+                        ref={scrollContainerRef}
+                        className="flex gap-3 p-4 overflow-x-auto overflow-y-hidden h-full w-full scrollbar-hide"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                )}
-                {canScrollRight && (
-                    <button
-                        onClick={handleScrollRight}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black/90 text-white p-2 rounded-full transition z-10 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        aria-label="Прокрутить вправо"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                )}
-            </div>
-        );
+                        {sortedParticipants.map((p) => (
+                            <div
+                                key={p.identity}
+                                className="flex-shrink-0 h-full relative"
+                                style={{ width: `${tileWidth}px` }}
+                            >
+                                <VideoTile
+                                    participant={p}
+                                    isLocal={p.isLocal}
+                                    isCameraEnabled={p.isCameraEnabled}
+                                    isMicEnabled={p.isMicrophoneEnabled}
+                                    isSpeaking={speakingParticipants.has(p.identity)}
+                                    isHandRaised={raisedHands.has(p.identity)}
+                                    volume={participantVolumes.get(p.identity) ?? 1.0}
+                                    onVolumeChange={onVolumeChange ? (volume) => onVolumeChange(p.identity, volume) : undefined}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    {canScrollLeft && (
+                        <button
+                            onClick={handleScrollLeft}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black/90 text-white p-2 rounded-full transition z-10 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            aria-label="Прокрутить влево"
+                        >
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                    )}
+                    {canScrollRight && (
+                        <button
+                            onClick={handleScrollRight}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black/90 text-white p-2 rounded-full transition z-10 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            aria-label="Прокрутить вправо"
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    )}
+                </div>
+            );
+        }
     }
 
     const startIndex = currentPage * gridLayout.tilesPerPage;
