@@ -182,6 +182,7 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isParticipantsVisible, setIsParticipantsVisible] = useState(true);
     const [isUiVisible, setIsUiVisible] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
     const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const restartIdleTimer = useCallback(() => {
@@ -190,6 +191,13 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
         idleTimerRef.current = setTimeout(() => {
             setIsUiVisible(false);
         }, 5000);
+    }, []);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     useEffect(() => {
