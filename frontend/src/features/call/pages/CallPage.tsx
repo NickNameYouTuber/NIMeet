@@ -177,7 +177,7 @@ const ContentCarousel = ({ items, onYouTubeClose, isUiVisible, youtubeCreatorId,
 };
 
 // Inner component to handle Room context logic
-const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string }) => {
+const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLeave: () => void; callId: string; onReconnecting?: () => void; onReconnected?: () => void }) => {
     const room = useRoomContext();
     const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare]);
     const participants = useParticipants();
@@ -302,6 +302,27 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
         room.on(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged);
         return () => { room.off(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged); }
     }, [room]);
+
+    // Reconnection handling
+    useEffect(() => {
+        const handleReconnecting = () => {
+            console.log('Reconnecting to room...');
+            if (onReconnecting) onReconnecting();
+        };
+
+        const handleReconnected = () => {
+            console.log('Reconnected to room');
+            if (onReconnected) onReconnected();
+        };
+
+        room.on(RoomEvent.Reconnecting, handleReconnecting);
+        room.on(RoomEvent.Reconnected, handleReconnected);
+
+        return () => {
+            room.off(RoomEvent.Reconnecting, handleReconnecting);
+            room.off(RoomEvent.Reconnected, handleReconnected);
+        };
+    }, [room, onReconnecting, onReconnected]);
 
     // Handlers
     const toggleCamera = () => localParticipant.setCameraEnabled(!localParticipant.isCameraEnabled);
@@ -517,6 +538,7 @@ const CallPage: React.FC = () => {
     const [token, setToken] = useState('');
     const [hasJoined, setHasJoined] = useState(false);
     const [connectionError, setConnectionError] = useState<string | null>(null);
+    const [isReconnecting, setIsReconnecting] = useState(false);
 
     const handleJoin = async (settings: { name: string, cameraEnabled: boolean, microphoneEnabled: boolean }) => {
         try {
@@ -547,19 +569,35 @@ const CallPage: React.FC = () => {
 
     const handleDisconnected = (reason?: string) => {
         console.log('Disconnected from room:', reason);
-        if (reason && reason !== 'CLIENT_REQUESTED') {
-            setConnectionError(`Соединение прервано: ${reason}`);
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 2000);
-        } else {
+        if (reason === 'CLIENT_REQUESTED') {
             window.location.href = '/';
+            return;
         }
+        setConnectionError(`Соединение прервано: ${reason || 'Неизвестная причина'}`);
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 5000);
+    };
+
+    const handleReconnecting = () => {
+        setIsReconnecting(true);
+        setConnectionError(null);
+    };
+
+    const handleReconnected = () => {
+        setIsReconnecting(false);
+        setConnectionError(null);
     };
 
     return (
         <>
-            {connectionError && (
+            {isReconnecting && (
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-4 py-2 rounded z-50 flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Переподключение...</span>
+                </div>
+            )}
+            {connectionError && !isReconnecting && (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded z-50">
                     {connectionError}
                 </div>
@@ -572,8 +610,18 @@ const CallPage: React.FC = () => {
                 audio={true}
                 data-lk-theme="default"
                 onDisconnected={handleDisconnected}
+                options={{
+                    autoSubscribe: true,
+                    adaptiveStream: true,
+                    dynacast: true,
+                }}
             >
-                <CallContent onLeave={() => window.location.href = '/'} callId={callId || ''} />
+                <CallContent 
+                    onLeave={() => window.location.href = '/'} 
+                    callId={callId || ''}
+                    onReconnecting={handleReconnecting}
+                    onReconnected={handleReconnected}
+                />
             </LiveKitRoom>
         </>
     );
