@@ -1,0 +1,68 @@
+version: '3.9'
+
+services:
+  # LiveKit SFU Server
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml
+    # environment:
+    #   - LIVEKIT_KEYS_devkey=secret
+    depends_on:
+      - redis
+    networks:
+      - conference-net
+
+  # Redis for LiveKit Room State
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - conference-net
+
+  # Python Backend API
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - LIVEKIT_API_URL=ws://livekit:7880
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret_must_be_at_least_32_chars_long_for_security_reasons
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - livekit
+    networks:
+      - conference-net
+
+  # Frontend (Dev mode)
+  # In a real prod setup, this would be an Nginx serving the build
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    # image: node:18-alpine # Removed in favor of build
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Anonymous volume to preserve image node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Essential for hot reload on Windows mounts
+    depends_on:
+      - backend
+    networks:
+      - conference-net
+
+networks:
+  conference-net:
+    driver: bridge
