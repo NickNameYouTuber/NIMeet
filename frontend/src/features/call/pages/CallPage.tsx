@@ -334,11 +334,16 @@ const CallContent = ({ onLeave, callId }: { onLeave: () => void; callId: string 
             {/* Featured Content (Unified Carousel) */}
             {hasFeaturedContent && (
                 <div
-                    className={`w-full bg-muted flex-shrink-0 relative transition-all duration-300 ${
-                        isParticipantsVisible 
-                            ? 'h-[calc(100%-120px-48px)] md:h-[calc(100%-200px-56px)]' 
-                            : 'h-[calc(100%-48px)] md:h-[calc(100%-56px)]'
-                    }`}
+                    className="w-full bg-muted flex-shrink-0 relative transition-all duration-300"
+                    style={{
+                        height: isParticipantsVisible
+                            ? isMobile
+                                ? 'calc(100% - 120px - 48px)'
+                                : 'calc(100% - 200px - 56px)'
+                            : isMobile
+                                ? 'calc(100% - 48px)'
+                                : 'calc(100% - 56px)'
+                    }}
                 >
                     <ContentCarousel
                         items={featuredItems}
