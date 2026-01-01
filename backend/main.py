@@ -66,6 +66,7 @@ async def get_token(req: TokenRequest):
         .with_identity(req.participant_name)
         .with_name(req.participant_name)
         .with_grants(grant)
+        .with_ttl("24h")
     )
     
     return {"token": token.to_jwt()}

@@ -516,12 +516,14 @@ const CallPage: React.FC = () => {
 
     const [token, setToken] = useState('');
     const [hasJoined, setHasJoined] = useState(false);
+    const [connectionError, setConnectionError] = useState<string | null>(null);
 
     const handleJoin = async (settings: { name: string, cameraEnabled: boolean, microphoneEnabled: boolean }) => {
         try {
             const t = await getToken(callId || 'default-room', settings.name);
             setToken(t);
             setHasJoined(true);
+            setConnectionError(null);
         } catch (e) {
             console.error("Failed to get token", e);
             alert("Failed to join room");
@@ -543,18 +545,37 @@ const CallPage: React.FC = () => {
         return `${protocol}//${hostname}`;
     };
 
+    const handleDisconnected = (reason?: string) => {
+        console.log('Disconnected from room:', reason);
+        if (reason && reason !== 'CLIENT_REQUESTED') {
+            setConnectionError(`Соединение прервано: ${reason}`);
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        } else {
+            window.location.href = '/';
+        }
+    };
+
     return (
-        <LiveKitRoom
-            token={token}
-            serverUrl={getServerUrl()}
-            connect={true}
-            video={true}
-            audio={true}
-            data-lk-theme="default"
-            onDisconnected={() => window.location.href = '/'}
-        >
-            <CallContent onLeave={() => window.location.href = '/'} callId={callId || ''} />
-        </LiveKitRoom>
+        <>
+            {connectionError && (
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded z-50">
+                    {connectionError}
+                </div>
+            )}
+            <LiveKitRoom
+                token={token}
+                serverUrl={getServerUrl()}
+                connect={true}
+                video={true}
+                audio={true}
+                data-lk-theme="default"
+                onDisconnected={handleDisconnected}
+            >
+                <CallContent onLeave={() => window.location.href = '/'} callId={callId || ''} />
+            </LiveKitRoom>
+        </>
     );
 };
 
