@@ -450,10 +450,21 @@ const CallPage: React.FC = () => {
         return <PreCallSetup onJoin={handleJoin} defaultName={defaultName} />;
     }
 
+    const getServerUrl = () => {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const hostname = window.location.hostname;
+        
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'ws://localhost:7880';
+        }
+        
+        return `${protocol}//${hostname}/rtc`;
+    };
+
     return (
         <LiveKitRoom
             token={token}
-            serverUrl="ws://localhost:7880"
+            serverUrl={getServerUrl()}
             connect={true}
             video={true}
             audio={true}
