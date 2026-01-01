@@ -627,13 +627,6 @@ const CallPage: React.FC = () => {
                     autoSubscribe: true,
                     adaptiveStream: true,
                     dynacast: true,
-                    rtcConfig: {
-                        iceServers: [
-                            {
-                                urls: ['stun:stun.l.google.com:19302'],
-                            },
-                        ],
-                    },
                 }}
             >
                 <CallContent 
