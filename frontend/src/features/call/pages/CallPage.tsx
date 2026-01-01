@@ -598,7 +598,8 @@ const CallPage: React.FC = () => {
             return 'ws://localhost:7880';
         }
         
-        return `${protocol}//${hostname}`;
+        const port = window.location.port ? `:${window.location.port}` : '';
+        return `${protocol}//${hostname}${port}`;
     };
 
     return (
@@ -626,6 +627,13 @@ const CallPage: React.FC = () => {
                     autoSubscribe: true,
                     adaptiveStream: true,
                     dynacast: true,
+                    rtcConfig: {
+                        iceServers: [
+                            {
+                                urls: ['stun:stun.l.google.com:19302'],
+                            },
+                        ],
+                    },
                 }}
             >
                 <CallContent 
