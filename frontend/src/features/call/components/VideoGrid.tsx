@@ -49,13 +49,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
 
     const getGridClasses = () => {
         if (totalCount <= 4) {
-            return cn(
-                "grid gap-2 md:gap-4 w-full max-w-4xl h-full",
-                totalCount === 1 && "grid-cols-1",
-                totalCount === 2 && "grid-cols-2",
-                totalCount === 3 && "grid-cols-3",
-                totalCount === 4 && "grid-cols-4"
-            );
+            return "grid grid-cols-4 gap-2 md:gap-4 w-full max-w-4xl h-full";
         } else {
             return "grid grid-cols-4 grid-rows-2 gap-2 md:gap-4 w-full max-w-4xl h-full";
         }
