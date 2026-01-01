@@ -49,9 +49,9 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
 
     return (
         <div className="w-full h-full p-2 md:p-4 bg-background overflow-auto relative">
-            <div className="max-md:grid max-md:grid-cols-4 max-md:grid-rows-2 max-md:gap-2 max-md:max-w-full max-md:h-full max-md:max-h-full md:flex md:flex-wrap md:gap-4 md:justify-start md:items-start md:w-full">
+            <div className="max-md:grid max-md:grid-cols-4 max-md:grid-rows-2 max-md:gap-2 max-md:max-w-full max-md:h-full md:flex md:flex-wrap md:gap-4 md:justify-start md:items-start md:w-full md:content-start">
                 {allParticipants.map((p) => (
-                    <div key={p.identity} className="max-md:w-full max-md:h-full max-md:min-h-0 md:flex-shrink-0 md:aspect-video md:w-auto md:min-w-[300px] md:flex-1 md:max-w-[calc(50%-0.5rem)] lg:max-w-[calc(33.333%-0.667rem)] xl:max-w-[calc(25%-0.75rem)] relative">
+                    <div key={p.identity} className="max-md:w-full max-md:h-full max-md:min-h-0 max-md:aspect-video md:flex-shrink-0 md:aspect-video md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)] xl:w-[calc(25%-0.75rem)] relative">
                         <VideoTile
                             participant={p}
                             isLocal={p.isLocal}
