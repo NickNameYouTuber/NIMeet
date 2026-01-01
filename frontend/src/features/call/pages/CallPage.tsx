@@ -569,27 +569,36 @@ const CallPage: React.FC = () => {
         return `${protocol}//${hostname}`;
     };
 
-    const handleDisconnected = (reason?: string) => {
+    const handleDisconnected = React.useCallback((reason?: string) => {
         console.log('Disconnected from room:', reason);
         if (reason === 'CLIENT_REQUESTED') {
             window.location.href = '/';
             return;
         }
+        
+        if (isReconnectingRef.current) {
+            return;
+        }
+        
         setConnectionError(`Соединение прервано: ${reason || 'Неизвестная причина'}`);
         setTimeout(() => {
-            window.location.href = '/';
+            if (!isReconnectingRef.current) {
+                window.location.href = '/';
+            }
         }, 5000);
-    };
+    }, []);
 
-    const handleReconnecting = () => {
+    const handleReconnecting = React.useCallback(() => {
+        isReconnectingRef.current = true;
         setIsReconnecting(true);
         setConnectionError(null);
-    };
+    }, []);
 
-    const handleReconnected = () => {
+    const handleReconnected = React.useCallback(() => {
+        isReconnectingRef.current = false;
         setIsReconnecting(false);
         setConnectionError(null);
-    };
+    }, []);
 
     return (
         <>

@@ -382,17 +382,28 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
     
     const TILE_GAP = getTileGap();
     const rows: typeof currentPageParticipants[] = [];
-    for (let i = 0; i < currentPageParticipants.length; i += gridLayout.cols) {
-        rows.push(currentPageParticipants.slice(i, i + gridLayout.cols));
-    }
     
     const showShareLink = currentPageParticipants.length === 1 && 
                           sortedParticipants.length === 1 && 
                           callId && 
                           currentPage === 0;
     
-    if (showShareLink) {
-        rows[0].push(null as any);
+    if (isMobile && showShareLink) {
+        for (let i = 0; i < currentPageParticipants.length; i++) {
+            rows.push([currentPageParticipants[i]]);
+        }
+        rows.push([null as any]);
+    } else {
+        for (let i = 0; i < currentPageParticipants.length; i += gridLayout.cols) {
+            rows.push(currentPageParticipants.slice(i, i + gridLayout.cols));
+        }
+        if (showShareLink) {
+            if (rows.length > 0 && rows[0].length < gridLayout.cols) {
+                rows[0].push(null as any);
+            } else {
+                rows.push([null as any]);
+            }
+        }
     }
 
     return (
