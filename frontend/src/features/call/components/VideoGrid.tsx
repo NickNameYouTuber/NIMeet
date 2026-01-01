@@ -29,7 +29,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         return (
             <div className="w-full h-full flex items-center justify-center p-2 md:p-4 bg-background overflow-hidden relative">
                 <div className="w-full max-w-2xl flex flex-col gap-2 md:gap-4 h-full justify-center">
-                    <div className="w-full h-32 md:h-48 relative">
+                    <div className="w-full aspect-video relative">
                         <VideoTile
                             participant={localParticipant}
                             isLocal={true}
@@ -39,7 +39,7 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
                             isHandRaised={raisedHands.has(localParticipant.identity)}
                         />
                     </div>
-                    <div className="w-full h-32 md:h-48 relative">
+                    <div className="w-full aspect-video relative">
                         <ShareLinkTile callId={callId} />
                     </div>
                 </div>
@@ -47,19 +47,11 @@ export const VideoGrid: React.FC<VideoGridProps> = ({
         );
     }
 
-    const getGridClasses = () => {
-        if (totalCount <= 4) {
-            return "grid grid-cols-4 gap-2 md:gap-4 w-full max-w-4xl h-full";
-        } else {
-            return "grid grid-cols-4 grid-rows-2 gap-2 md:gap-4 w-full max-w-4xl h-full";
-        }
-    };
-
     return (
-        <div className="w-full h-full flex items-center justify-center p-2 md:p-4 bg-background overflow-hidden relative">
-            <div className={getGridClasses()}>
+        <div className="w-full h-full p-2 md:p-4 bg-background overflow-auto relative">
+            <div className="max-md:grid max-md:grid-cols-4 max-md:grid-rows-2 max-md:gap-2 max-md:max-w-full max-md:h-full max-md:max-h-full md:flex md:flex-wrap md:gap-4 md:justify-start md:items-start md:w-full">
                 {allParticipants.map((p) => (
-                    <div key={p.identity} className="w-full h-full min-h-0 relative">
+                    <div key={p.identity} className="max-md:w-full max-md:h-full max-md:min-h-0 md:flex-shrink-0 md:aspect-video md:w-auto md:min-w-[300px] md:flex-1 md:max-w-[calc(50%-0.5rem)] lg:max-w-[calc(33.333%-0.667rem)] xl:max-w-[calc(25%-0.75rem)] relative">
                         <VideoTile
                             participant={p}
                             isLocal={p.isLocal}
