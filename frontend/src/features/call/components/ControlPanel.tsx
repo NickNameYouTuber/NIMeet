@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings, RefreshCw } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, MessageSquare, Hand, PhoneOff, Youtube, Settings, RefreshCw, Disc } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ControlPanelProps {
@@ -9,12 +9,14 @@ interface ControlPanelProps {
     isChatOpen: boolean;
     isHandRaised: boolean;
     isYouTubeActive: boolean;
+    isRecording: boolean;
     onToggleCamera: () => void;
     onToggleMicrophone: () => void;
     onToggleScreenShare: () => void;
     onToggleChat: () => void;
     onToggleRaiseHand: () => void;
     onToggleYouTube: () => void;
+    onToggleRecording: () => void;
     onOpenSettings: () => void;
     onYouTubeChangeVideo?: () => void;
     onLeave: () => void;
@@ -27,12 +29,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     isChatOpen,
     isHandRaised,
     isYouTubeActive,
+    isRecording,
     onToggleCamera,
     onToggleMicrophone,
     onToggleScreenShare,
     onToggleChat,
     onToggleRaiseHand,
     onToggleYouTube,
+    onToggleRecording,
     onOpenSettings,
     onYouTubeChangeVideo,
     onLeave,
@@ -72,6 +76,20 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         title={isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
                     >
                         {isScreenSharing ? <MonitorOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
+                    </button>
+
+                    <button
+                        onClick={onToggleRecording}
+                        className={cn(
+                            "p-2 md:p-3 rounded-full transition-colors flex-shrink-0 relative",
+                            isRecording ? "bg-red-600 hover:bg-red-700 text-white animate-pulse" : "bg-secondary hover:bg-secondary/80 text-foreground"
+                        )}
+                        title={isRecording ? 'Stop Recording' : 'Start Recording'}
+                    >
+                        <Disc className="w-5 h-5" />
+                        {isRecording && (
+                            <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-card animate-bounce" />
+                        )}
                     </button>
 
                     <button

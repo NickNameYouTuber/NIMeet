@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import CallPage from './features/call/pages/CallPage';
-import { Video, Users, ArrowLeft } from 'lucide-react';
+import { Video, Users, ArrowLeft, LogOut } from 'lucide-react';
+import { NIIDLoginButton } from './features/niid/components/NIIDLoginButton';
+import { NIIDClient } from './features/niid/sdk/core/NIIDClient';
+import { UserInfo } from './features/niid/sdk/types';
 
 const Home = () => {
     const generateRoomId = () => {
@@ -13,6 +16,48 @@ const Home = () => {
         window.location.href = `/call/${newRoomId}`;
     };
 
+    const [user, setUser] = useState<UserInfo | null>(null);
+    const [client, setClient] = useState<NIIDClient | null>(null);
+
+    React.useEffect(() => {
+        const niidClient = new NIIDClient({
+            clientId: 'F1gW0idHtGKhrE-GqaBkHA',
+            clientSecret: '02cfUSXpevaDsXXgpXflCegFJhfMuDUCFr1Re9hgP34',
+            redirectUri: window.location.origin,
+            ssoUrl: 'http://localhost:11706',
+            apiUrl: 'http://localhost:11700'
+        });
+        setClient(niidClient);
+
+        const checkAuth = async () => {
+            try {
+                // Check callback
+                const callbackUser = await niidClient.handleCallback();
+                if (callbackUser) {
+                    setUser(callbackUser);
+                    return;
+                }
+
+                // Check existing session
+                if (niidClient.isAuthenticated()) {
+                    const userInfo = await niidClient.getUserInfo();
+                    setUser(userInfo);
+                }
+            } catch (error) {
+                console.error('Home Auth Error:', error);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
+    const handleLogout = () => {
+        if (client) {
+            client.logout();
+            setUser(null);
+        }
+    };
+
     const handleJoinClick = () => {
         window.location.href = '/join';
     };
@@ -22,6 +67,36 @@ const Home = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-[#1a0f0a] via-[#2d1812] to-[#0a0503]">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(139,69,19,0.15),transparent_50%)]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(101,67,33,0.1),transparent_50%)]" />
+            </div>
+
+            <div className="absolute top-6 right-6 z-20">
+                {user ? (
+                    <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full pl-1 pr-4 py-1">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold text-sm">
+                            {user.name?.[0]?.toUpperCase()}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-white text-sm font-medium leading-none">{user.name}</span>
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            className="ml-2 text-white/50 hover:text-white transition-colors"
+                            title="Выйти"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                ) : (
+                    <NIIDLoginButton
+                        clientId="F1gW0idHtGKhrE-GqaBkHA"
+                        clientSecret="02cfUSXpevaDsXXgpXflCegFJhfMuDUCFr1Re9hgP34"
+                        redirectUri={window.location.origin}
+                        ssoUrl="http://localhost:11706"
+                        apiUrl="http://localhost:11700"
+                        variant="secondary"
+                        onSuccess={setUser}
+                    />
+                )}
             </div>
 
             <div className="relative z-10 h-full flex flex-col">

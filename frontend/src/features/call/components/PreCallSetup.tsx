@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Video, VideoOff, ArrowLeft } from 'lucide-react';
+import { NIIDLoginButton } from '../../niid/components/NIIDLoginButton';
+import { NIIDClient } from '../../niid/sdk/core/NIIDClient';
+
 
 interface PreCallSetupProps {
     onJoin: (settings: { cameraEnabled: boolean; microphoneEnabled: boolean; name: string }) => void;
@@ -56,6 +59,37 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
         }
     }, [cameraEnabled, microphoneEnabled]);
 
+    useEffect(() => {
+        const client = new NIIDClient({
+            clientId: 'F1gW0idHtGKhrE-GqaBkHA',
+            clientSecret: '02cfUSXpevaDsXXgpXflCegFJhfMuDUCFr1Re9hgP34',
+            redirectUri: window.location.origin,
+            ssoUrl: 'http://localhost:11706', // TODO: Move to env
+            apiUrl: 'http://localhost:11700'  // TODO: Move to env
+        });
+
+        const checkAuth = async () => {
+            try {
+                // Check if returning from redirect
+                const user = await client.handleCallback();
+                if (user) {
+                    setName(user.name);
+                    return;
+                }
+
+                // Check if already authenticated
+                if (client.isAuthenticated()) {
+                    const userInfo = await client.getUserInfo();
+                    setName(userInfo.name);
+                }
+            } catch (error) {
+                console.error('NIID Auth failed:', error);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
     const handleJoin = () => {
         if (name.trim()) {
             onJoin({ cameraEnabled, microphoneEnabled, name });
@@ -106,11 +140,10 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
                                 <div className="flex gap-3 md:gap-4">
                                     <button
                                         onClick={() => setCameraEnabled(!cameraEnabled)}
-                                        className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg font-medium transition-all min-h-[44px] ${
-                                            cameraEnabled
-                                                ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
-                                                : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
-                                        }`}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg font-medium transition-all min-h-[44px] ${cameraEnabled
+                                            ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
+                                            : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
+                                            }`}
                                     >
                                         {cameraEnabled ? (
                                             <Video className="w-4 h-4 md:w-5 md:h-5" />
@@ -122,11 +155,10 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
 
                                     <button
                                         onClick={() => setMicrophoneEnabled(!microphoneEnabled)}
-                                        className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg font-medium transition-all min-h-[44px] ${
-                                            microphoneEnabled
-                                                ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
-                                                : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
-                                        }`}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg font-medium transition-all min-h-[44px] ${microphoneEnabled
+                                            ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
+                                            : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
+                                            }`}
                                     >
                                         {microphoneEnabled ? (
                                             <Mic className="w-4 h-4 md:w-5 md:h-5" />
@@ -144,6 +176,33 @@ export const PreCallSetup: React.FC<PreCallSetupProps> = ({ onJoin, defaultName 
                                 >
                                     Подключиться
                                 </button>
+
+                                <div className="pt-2">
+                                    {!name.trim() && (
+                                        <div className="relative">
+                                            <div className="absolute inset-0 flex items-center">
+                                                <span className="w-full border-t border-white/10" />
+                                            </div>
+                                            <div className="relative flex justify-center text-xs uppercase">
+                                                <span className="bg-[#1a0f0a] px-2 text-white/40">или</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-4">
+                                        {!name.trim() && (
+                                            <NIIDLoginButton
+                                                clientId="F1gW0idHtGKhrE-GqaBkHA"
+                                                clientSecret="02cfUSXpevaDsXXgpXflCegFJhfMuDUCFr1Re9hgP34"
+                                                redirectUri={window.location.origin}
+                                                ssoUrl="http://localhost:11706"
+                                                apiUrl="http://localhost:11700"
+                                                className="w-full"
+                                                onSuccess={(user) => setName(user.name)}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="order-1 lg:order-2">

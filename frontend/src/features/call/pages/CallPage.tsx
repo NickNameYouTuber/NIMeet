@@ -6,7 +6,6 @@ import {
     useRoomContext,
     useLocalParticipant,
     useParticipants,
-    RoomAudioRenderer,
 } from '@livekit/components-react';
 import { Track, RoomEvent, Participant, ConnectionState } from 'livekit-client';
 import '@livekit/components-styles';
@@ -16,45 +15,45 @@ const patchRTCPeerConnection = () => {
         console.warn('[TURN PATCH] RTCPeerConnection not available');
         return;
     }
-    
+
     if ((window as any).__RTCPeerConnectionPatched) {
         console.log('[TURN PATCH] Already patched, skipping');
         return;
     }
-    
+
     const OriginalRTCPeerConnection = window.RTCPeerConnection;
-    
+
     const ExternalTurnServer: RTCIceServer = {
         urls: ['turn:212.192.217.217:3478'],
         username: 'turnuser',
         credential: '4089f0b7dffe89ccb5e08998d371939c'
     };
-    
+
     console.log('[TURN PATCH] Patching RTCPeerConnection, external TURN:', ExternalTurnServer);
-    
-    const PatchedRTCPeerConnection = function(this: RTCPeerConnection, configuration?: RTCConfiguration): RTCPeerConnection {
+
+    const PatchedRTCPeerConnection = function (this: RTCPeerConnection, configuration?: RTCConfiguration): RTCPeerConnection {
         const existingIceServers = configuration?.iceServers || [];
-        
+
         console.log('[TURN PATCH] RTCPeerConnection created, existing ICE servers:', existingIceServers);
-        
+
         const customIceServers: RTCIceServer[] = [
             ExternalTurnServer,
             ...existingIceServers
         ];
-        
+
         console.log('[TURN PATCH] Patched ICE servers:', customIceServers);
-        
+
         const patchedConfiguration: RTCConfiguration = {
             ...configuration,
             iceServers: customIceServers
         };
-        
+
         return new OriginalRTCPeerConnection(patchedConfiguration);
     };
-    
+
     PatchedRTCPeerConnection.prototype = OriginalRTCPeerConnection.prototype;
     Object.setPrototypeOf(PatchedRTCPeerConnection, OriginalRTCPeerConnection);
-    
+
     Object.getOwnPropertyNames(OriginalRTCPeerConnection).forEach(name => {
         if (name !== 'prototype' && name !== 'length' && name !== 'name') {
             try {
@@ -63,7 +62,7 @@ const patchRTCPeerConnection = () => {
             }
         }
     });
-    
+
     window.RTCPeerConnection = PatchedRTCPeerConnection as any;
     (window as any).__RTCPeerConnectionPatched = true;
     console.log('[TURN PATCH] RTCPeerConnection patched successfully');
@@ -246,6 +245,7 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     // States
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isYouTubeActive, setIsYouTubeActive] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
     const [youtubeCreatorId, setYoutubeCreatorId] = useState<string | null>(null);
     const [speakingParticipants, setSpeakingParticipants] = useState<Set<string>>(new Set());
     const [raisedHands, setRaisedHands] = useState<Set<string>>(new Set());
@@ -255,7 +255,10 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     const [isMobile, setIsMobile] = useState(false);
     const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
     const [participantVolumes, setParticipantVolumes] = useState<Map<string, number>>(new Map());
+
     const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+    const chunksRef = React.useRef<Blob[]>([]);
 
     const restartIdleTimer = useCallback(() => {
         setIsUiVisible(true);
@@ -299,7 +302,7 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    const sendDataMessage = useCallback((message: DataMessage) => {
+    const sendDataMessage = useCallback((message: DataMessage | { type: 'youtube_sync', payload: any }) => {
         const data = encoder.encode(JSON.stringify(message));
         localParticipant.publishData(data, { reliable: true });
     }, [localParticipant]);
@@ -308,7 +311,7 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     useEffect(() => {
         const handleDataReceived = (payload: Uint8Array, participant?: Participant) => {
             try {
-                const message: DataMessage = JSON.parse(decoder.decode(payload));
+                const message = JSON.parse(decoder.decode(payload));
 
                 if (message.type === 'chat') {
                     const chatMsg: ChatMessage = {
@@ -329,8 +332,8 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
                         }
                         return next;
                     });
-                } else if ((message as any).type === 'youtube_sync') {
-                    const { action, senderId } = (message as any).payload;
+                } else if (message.type === 'youtube_sync') {
+                    const { action, senderId } = message.payload;
                     if (action === 'load' || action === 'sync_response') {
                         setIsYouTubeActive(true);
                         if (action === 'load' && senderId && !youtubeCreatorId) {
@@ -425,6 +428,118 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
                 });
                 setIsYouTubeActive(false);
                 setYoutubeCreatorId(null);
+            }
+        }
+    };
+
+    const handleToggleRecording = async () => {
+        if (isRecording) {
+            mediaRecorderRef.current?.stop();
+            setIsRecording(false);
+        } else {
+            try {
+                // 1. Get Display Media (Video + System Audio)
+                const displayStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true
+                });
+
+                // 2. Setup Audio Mixing
+                const audioContext = new AudioContext();
+                const destination = audioContext.createMediaStreamDestination();
+                const sources: MediaStreamAudioSourceNode[] = [];
+
+                // Add System Audio (if available)
+                if (displayStream.getAudioTracks().length > 0) {
+                    const systemSource = audioContext.createMediaStreamSource(displayStream);
+                    const systemGain = audioContext.createGain();
+                    systemGain.gain.value = 1.0;
+                    systemSource.connect(systemGain).connect(destination);
+                    sources.push(systemSource);
+                }
+
+                // Add Local Microphone (if enabled)
+                if (localParticipant.isMicrophoneEnabled) {
+                    try {
+                        const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const micSource = audioContext.createMediaStreamSource(micStream);
+                        const micGain = audioContext.createGain();
+                        micGain.gain.value = 1.0;
+                        micSource.connect(micGain).connect(destination);
+                        sources.push(micSource);
+                    } catch (e) {
+                        console.warn("Could not add microphone to recording", e);
+                    }
+                }
+
+                // 3. Create Final Mixed Stream
+                // If we have mixed audio, use it. Otherwise, use what we have.
+                const mixedAudioTracks = destination.stream.getAudioTracks();
+                const finalAudioTracks = mixedAudioTracks.length > 0 ? mixedAudioTracks : displayStream.getAudioTracks();
+
+                const mixedStream = new MediaStream([
+                    ...displayStream.getVideoTracks(),
+                    ...finalAudioTracks
+                ]);
+
+                // Determine best supported mime type
+                const mimeTypes = [
+                    'video/webm;codecs=vp9,opus',
+                    'video/webm;codecs=vp8,opus',
+                    'video/webm',
+                    'video/mp4'
+                ];
+
+                const selectedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || 'video/webm';
+                console.log('Using mime type for recording:', selectedMimeType);
+
+                const mediaRecorder = new MediaRecorder(mixedStream, {
+                    mimeType: selectedMimeType
+                });
+
+                mediaRecorderRef.current = mediaRecorder;
+                chunksRef.current = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        chunksRef.current.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunksRef.current, { type: selectedMimeType });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    // Determine extension based on mime type
+                    const ext = selectedMimeType.includes('mp4') ? 'mp4' : 'webm';
+                    const timestamp = new Date().getTime();
+                    a.download = `rec_${timestamp}.${ext}`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    // Cleanup
+                    displayStream.getTracks().forEach(t => t.stop());
+
+                    // Close context and sources specific to recording (mic stream is separate userMedia)
+                    audioContext.close();
+
+                    if (isRecording) setIsRecording(false);
+                };
+
+                // Stop recording if user stops sharing via browser UI
+                displayStream.getVideoTracks()[0].onended = () => {
+                    if (mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                    setIsRecording(false);
+                };
+
+                mediaRecorder.start(1000); // Collect in 1s chunks
+                setIsRecording(true);
+            } catch (err) {
+                console.error("Error starting recording:", err);
+                alert("Recording failed. Please ensure you grant screen access and audio permissions.");
             }
         }
     };
@@ -558,12 +673,14 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
                     isChatOpen={isChatOpen}
                     isHandRaised={raisedHands.has(localParticipant.identity)}
                     isYouTubeActive={isYouTubeActive}
+                    isRecording={isRecording}
                     onToggleCamera={toggleCamera}
                     onToggleMicrophone={toggleMicrophone}
                     onToggleScreenShare={toggleScreenShare}
                     onToggleChat={() => setIsChatOpen(!isChatOpen)}
                     onToggleRaiseHand={toggleRaiseHand}
                     onToggleYouTube={handleToggleYouTube}
+                    onToggleRecording={handleToggleRecording}
                     onOpenSettings={() => setIsDeviceSettingsOpen(true)}
                     onYouTubeChangeVideo={isYouTubeActive && youtubeCreatorId === localParticipant.identity ? () => {
                         if ((window as any).__youtubeChangeVideo) {
@@ -603,17 +720,17 @@ const CallPage: React.FC = () => {
     const [isReconnecting, setIsReconnecting] = useState(false);
     const isReconnectingRef = React.useRef(false);
 
-    const handleDisconnected = React.useCallback((reason?: string) => {
+    const handleDisconnected = React.useCallback((reason?: any) => {
         console.log('Disconnected from room:', reason);
         if (reason === 'CLIENT_REQUESTED') {
             window.location.href = '/';
             return;
         }
-        
+
         if (isReconnectingRef.current) {
             return;
         }
-        
+
         setConnectionError(`Соединение прервано: ${reason || 'Неизвестная причина'}`);
         setTimeout(() => {
             if (!isReconnectingRef.current) {
@@ -653,11 +770,11 @@ const CallPage: React.FC = () => {
     const getServerUrl = () => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const hostname = window.location.hostname;
-        
+
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'ws://localhost:7880';
+            return 'ws://localhost:7552';
         }
-        
+
         const port = window.location.port ? `:${window.location.port}` : '';
         return `${protocol}//${hostname}${port}`;
     };
@@ -684,13 +801,12 @@ const CallPage: React.FC = () => {
                 data-lk-theme="default"
                 onDisconnected={handleDisconnected}
                 options={{
-                    autoSubscribe: true,
                     adaptiveStream: true,
                     dynacast: true
                 }}
             >
-                <CallContent 
-                    onLeave={() => window.location.href = '/'} 
+                <CallContent
+                    onLeave={() => window.location.href = '/'}
                     callId={callId || ''}
                     onReconnecting={handleReconnecting}
                     onReconnected={handleReconnected}
