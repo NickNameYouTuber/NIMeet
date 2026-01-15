@@ -17,7 +17,8 @@
         "http://127.0.0.1/*",
         "https://*.nimeet.ru/*",
         "https://*.nicorp.tech/*",
-        "https://meet.nicorp.tech/*"
+        "https://meet.nicorp.tech/*",
+        "https://nit.nicorp.tech/*"
     ],
     "background": {
         "service_worker": "background/service-worker.js"
@@ -41,6 +42,7 @@
                 "https://*.nimeet.ru/*",
                 "https://*.nicorp.tech/*",
                 "https://meet.nicorp.tech/*",
+                "https://nit.nicorp.tech/*",
                 "http://localhost:*/*",
                 "http://127.0.0.1:*/*"
             ],
