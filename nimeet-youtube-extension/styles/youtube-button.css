@@ -18,7 +18,6 @@
     transition: all 0.2s ease;
     opacity: 1;
     height: 100%;
-    /* Fill height of control bar mostly */
     max-height: 36px;
     align-self: center;
 }
