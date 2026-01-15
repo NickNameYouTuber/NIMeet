@@ -102,18 +102,32 @@ type FeaturedItem =
 const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClose, youtubeCreatorId, localParticipantId }: { item: FeaturedItem, isActive: boolean, isUiVisible: boolean, total: number, index: number, onYouTubeClose: () => void, youtubeCreatorId: string | null, localParticipantId: string }) => {
     const videoRef = React.useRef<HTMLVideoElement>(null);
 
+    // Store track reference to avoid re-attach on every render
+    const trackRef = React.useRef<any>(null);
+
     useEffect(() => {
-        if (videoRef.current && item.type === 'screen' && item.track) {
+        if (item.type !== 'screen' || !item.track) return;
+
+        // Only re-attach if track actually changed
+        if (trackRef.current === item.track && videoRef.current?.srcObject) {
+            return;
+        }
+
+        trackRef.current = item.track;
+
+        if (videoRef.current) {
             item.track.attach(videoRef.current);
             return () => {
-                if (videoRef.current) item.track.detach(videoRef.current);
+                if (videoRef.current && trackRef.current) {
+                    trackRef.current.detach(videoRef.current);
+                }
             };
         }
-    }, [item]);
+    }, [item.type, item.type === 'screen' ? item.track : null]);
 
     if (item.type === 'youtube') {
         return (
-            <div className={`w-full h-full absolute inset-0 transition-opacity duration-500 ${isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+            <div className={`w-full h-full absolute inset-0 transition-opacity duration-500 pb-11 ${isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
                 <YouTubePlayer
                     onClose={onYouTubeClose}
                     isVisible={isActive}
