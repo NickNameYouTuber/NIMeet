@@ -8,18 +8,57 @@
     let isInCall = false;
     let broadcastButton = null;
     let checkInterval = null;
+    let isContextValid = true;
+
+    // Check if extension context is still valid
+    function isExtensionValid() {
+        try {
+            // This will throw if context is invalidated
+            return chrome.runtime && chrome.runtime.id;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Cleanup on context invalidation
+    function cleanup() {
+        isContextValid = false;
+        if (checkInterval) {
+            clearInterval(checkInterval);
+            checkInterval = null;
+        }
+        // Remove button if exists
+        const btn = document.getElementById('nimeet-broadcast-btn');
+        if (btn) btn.remove();
+        console.log('[NIMeet Extension] Context invalidated, cleaned up');
+    }
 
     // Check call status periodically
     function checkCallStatus() {
-        chrome.runtime.sendMessage({ action: 'check_call_status' }, (response) => {
-            if (chrome.runtime.lastError) {
-                console.log('[NIMeet Extension] Error checking status:', chrome.runtime.lastError);
-                isInCall = false;
-            } else {
-                isInCall = response?.isInCall || false;
-            }
-            updateButtonState();
-        });
+        if (!isExtensionValid()) {
+            cleanup();
+            return;
+        }
+
+        try {
+            chrome.runtime.sendMessage({ action: 'check_call_status' }, (response) => {
+                if (chrome.runtime.lastError) {
+                    // Check if it's a context invalidation error
+                    if (chrome.runtime.lastError.message?.includes('Extension context invalidated')) {
+                        cleanup();
+                        return;
+                    }
+                    console.log('[NIMeet Extension] Error checking status:', chrome.runtime.lastError.message);
+                    isInCall = false;
+                } else {
+                    isInCall = response?.isInCall || false;
+                }
+                updateButtonState();
+            });
+        } catch (e) {
+            console.log('[NIMeet Extension] Exception in checkCallStatus:', e);
+            cleanup();
+        }
     }
 
     // Get current video URL
@@ -33,7 +72,7 @@
 
     // Create broadcast button
     function createBroadcastButton() {
-        if (broadcastButton) return;
+        if (broadcastButton) return broadcastButton;
 
         broadcastButton = document.createElement('button');
         broadcastButton.id = 'nimeet-broadcast-btn';
@@ -52,6 +91,11 @@
 
     // Handle broadcast button click
     function handleBroadcast() {
+        if (!isExtensionValid()) {
+            showNotification('Расширение обновилось. Обновите страницу.', 'warning');
+            return;
+        }
+
         if (!isInCall) {
             showNotification('Сначала присоединитесь к созвону в NIMeet', 'warning');
             return;
@@ -65,17 +109,27 @@
 
         console.log('[NIMeet Extension] Broadcasting video:', url);
 
-        chrome.runtime.sendMessage({ action: 'broadcast_video', url }, (response) => {
-            if (chrome.runtime.lastError) {
-                showNotification('Ошибка: ' + chrome.runtime.lastError.message, 'error');
-                return;
-            }
-            if (response?.success) {
-                showNotification('Видео транслируется в NIMeet! 🎬', 'success');
-            } else {
-                showNotification('Не удалось транслировать: ' + (response?.error || 'Неизвестная ошибка'), 'error');
-            }
-        });
+        try {
+            chrome.runtime.sendMessage({ action: 'broadcast_video', url }, (response) => {
+                if (chrome.runtime.lastError) {
+                    if (chrome.runtime.lastError.message?.includes('Extension context invalidated')) {
+                        showNotification('Расширение обновилось. Обновите страницу.', 'warning');
+                        cleanup();
+                        return;
+                    }
+                    showNotification('Ошибка: ' + chrome.runtime.lastError.message, 'error');
+                    return;
+                }
+                if (response?.success) {
+                    showNotification('Видео транслируется в NIMeet! 🎬', 'success');
+                } else {
+                    showNotification('Не удалось транслировать: ' + (response?.error || 'Неизвестная ошибка'), 'error');
+                }
+            });
+        } catch (e) {
+            showNotification('Расширение обновилось. Обновите страницу.', 'warning');
+            cleanup();
+        }
     }
 
     // Update button appearance based on call status
@@ -112,32 +166,46 @@
 
     // Find and inject button into YouTube player
     function injectButton() {
-        // Target: right controls in the video player
-        const rightControls = document.querySelector('.ytp-right-controls');
+        if (!isContextValid) return;
 
-        if (rightControls && !document.getElementById('nimeet-broadcast-btn')) {
+        // Target: LEFT controls (more visible, near play/volume)
+        const leftControls = document.querySelector('.ytp-left-controls');
+
+        if (leftControls && !document.getElementById('nimeet-broadcast-btn')) {
             const button = createBroadcastButton();
-            rightControls.insertBefore(button, rightControls.firstChild);
-            console.log('[NIMeet Extension] Button injected into player controls');
+            leftControls.appendChild(button);
+            console.log('[NIMeet Extension] Button injected into LEFT player controls');
             updateButtonState();
         }
     }
 
     // Initialize
     function init() {
+        if (!isExtensionValid()) {
+            console.log('[NIMeet Extension] Context already invalid, not initializing');
+            return;
+        }
+
         console.log('[NIMeet Extension] Initializing...');
 
         // Initial status check
         checkCallStatus();
 
-        // Check status every 5 seconds
-        checkInterval = setInterval(checkCallStatus, 5000);
+        // Check status every 3 seconds
+        checkInterval = setInterval(() => {
+            if (!isContextValid) return;
+            checkCallStatus();
+        }, 3000);
 
         // Try to inject button immediately and on DOM changes
         injectButton();
 
         // Watch for YouTube's dynamic content loading
-        const observer = new MutationObserver((mutations) => {
+        const observer = new MutationObserver(() => {
+            if (!isContextValid) {
+                observer.disconnect();
+                return;
+            }
             injectButton();
         });
 
@@ -148,14 +216,19 @@
 
         // Re-inject on navigation (YouTube SPA)
         let lastUrl = location.href;
-        new MutationObserver(() => {
+        const urlObserver = new MutationObserver(() => {
+            if (!isContextValid) {
+                urlObserver.disconnect();
+                return;
+            }
             if (location.href !== lastUrl) {
                 lastUrl = location.href;
                 console.log('[NIMeet Extension] URL changed, re-injecting button');
                 broadcastButton = null; // Reset so it gets recreated
                 setTimeout(injectButton, 1000);
             }
-        }).observe(document.body, { childList: true, subtree: true });
+        });
+        urlObserver.observe(document.body, { childList: true, subtree: true });
     }
 
     // Wait for page to be ready
