@@ -4,19 +4,23 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    margin-right: 8px;
+    padding: 0 12px;
+    margin-left: 10px;
+    margin-right: 0;
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border: none;
-    border-radius: 20px;
+    border-radius: 4px;
     color: white;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Roboto', sans-serif;
     cursor: pointer;
     transition: all 0.2s ease;
     opacity: 1;
-    height: 32px;
+    height: 100%;
+    /* Fill height of control bar mostly */
+    max-height: 36px;
+    align-self: center;
 }
 
 #nimeet-broadcast-btn:hover {

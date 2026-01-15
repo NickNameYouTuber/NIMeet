@@ -311,13 +311,21 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
         return () => window.removeEventListener('message', handleExtensionMessage);
     }, [localParticipant.identity]);
 
-    // Notify extension when joining/leaving call
+    // Notify extension when joining/leaving call (Heartbeat)
     useEffect(() => {
-        // Notify extension that we're in a call
-        window.postMessage({ type: 'nimeet_call_started', callId }, '*');
+        const sendHeartbeat = () => {
+            window.postMessage({ type: 'nimeet_call_started', callId }, '*');
+        };
+
+        // Send immediately
+        sendHeartbeat();
         console.log('[NIMeet] Notified extension: call started');
 
+        // Send every 2 seconds to ensure extension knows we're here
+        const interval = setInterval(sendHeartbeat, 2000);
+
         return () => {
+            clearInterval(interval);
             // Notify extension that we left the call
             window.postMessage({ type: 'nimeet_call_ended' }, '*');
             console.log('[NIMeet] Notified extension: call ended');
