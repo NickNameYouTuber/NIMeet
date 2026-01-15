@@ -15,7 +15,9 @@
     "host_permissions": [
         "http://localhost/*",
         "http://127.0.0.1/*",
-        "https://*.nimeet.ru/*"
+        "https://*.nimeet.ru/*",
+        "https://*.nicorp.tech/*",
+        "https://meet.nicorp.tech/*"
     ],
     "background": {
         "service_worker": "background/service-worker.js"
@@ -37,6 +39,8 @@
         {
             "matches": [
                 "https://*.nimeet.ru/*",
+                "https://*.nicorp.tech/*",
+                "https://meet.nicorp.tech/*",
                 "http://localhost:*/*",
                 "http://127.0.0.1:*/*"
             ],
