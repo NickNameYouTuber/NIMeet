@@ -127,7 +127,7 @@ const CarouselItem = ({ item, isActive, isUiVisible, total, index, onYouTubeClos
 
     if (item.type === 'youtube') {
         return (
-            <div className={`w-full h-full absolute inset-0 transition-opacity duration-500 pb-11 ${isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+            <div className={`w-full h-full absolute inset-0 transition-opacity duration-500 ${isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
                 <YouTubePlayer
                     onClose={onYouTubeClose}
                     isVisible={isActive}
@@ -598,18 +598,7 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
         <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
             {/* Featured Content (Unified Carousel) */}
             {hasFeaturedContent && (
-                <div
-                    className="w-full bg-muted flex-shrink-0 relative transition-all duration-300"
-                    style={{
-                        height: isParticipantsVisible
-                            ? isMobile
-                                ? 'calc(100% - 120px - 48px)'
-                                : 'calc(100% - 160px - 56px)'
-                            : isMobile
-                                ? 'calc(100% - 48px)'
-                                : 'calc(100% - 56px)'
-                    }}
-                >
+                <div className="w-full bg-muted relative transition-all duration-300 flex-1 min-h-0 flex flex-col">
                     <ContentCarousel
                         items={featuredItems}
                         onYouTubeClose={handleYouTubeClose}
@@ -617,12 +606,37 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
                         youtubeCreatorId={youtubeCreatorId}
                         localParticipantId={localParticipant.identity}
                     />
+
+                    {/* Raised hands badge (overlay on featured content when participants hidden) */}
+                    {!isParticipantsVisible && (
+                        <div className="absolute bottom-4 right-4 z-40">
+                            <RaisedHandsBadge participants={participants} raisedHands={raisedHands} />
+                        </div>
+                    )}
                 </div>
+            )}
+
+            {/* Toggle Bar - In flow between content and strip */}
+            {hasFeaturedContent && (
+                <button
+                    onClick={() => setIsParticipantsVisible(!isParticipantsVisible)}
+                    className={`w-full relative z-20 flex items-center justify-center cursor-pointer bg-card/60 hover:bg-card/90 backdrop-blur-sm border-y border-white/5 transition-all duration-300 overflow-hidden outline-none ${isUiVisible ? 'h-6 opacity-100' : 'h-0 opacity-0'
+                        }`}
+                    title={isParticipantsVisible ? "Скрыть участников" : "Показать участников"}
+                >
+                    {isParticipantsVisible ? (
+                        <ChevronDown className="w-4 h-4 text-white/70" />
+                    ) : (
+                        <ChevronUp className="w-4 h-4 text-white/70" />
+                    )}
+                </button>
             )}
 
             {/* Participants strip (changes height based on featured content) */}
             <div
-                className={`overflow-hidden transition-all duration-300 relative ${hasFeaturedContent && !isParticipantsVisible ? 'h-0' : hasFeaturedContent ? 'h-[120px] md:h-[160px]' : 'flex-1 pb-12 md:pb-14'
+                className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] relative ${hasFeaturedContent
+                        ? (isParticipantsVisible ? 'h-[120px] md:h-[160px] opacity-100' : 'h-0 opacity-0')
+                        : 'flex-1 opacity-100'
                     }`}
             >
                 <VideoGrid
@@ -643,43 +657,11 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
                 />
             </div>
 
-            {/* Collapse toggle bar - when participants are visible */}
-            {hasFeaturedContent && isParticipantsVisible && (
-                <button
-                    onClick={() => setIsParticipantsVisible(false)}
-                    className="fixed bottom-[calc(48px+120px)] md:bottom-[calc(56px+160px)] left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 min-h-[44px]"
-                    title="Скрыть участников"
-                >
-                    <div className="flex items-center gap-2 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
-                        <div className="w-8 h-0.5 bg-border/50 group-hover:bg-border transition-colors rounded-full" />
-                        <ChevronDown className="w-4 h-4" />
-                        <div className="w-8 h-0.5 bg-border/50 group-hover:bg-border transition-colors rounded-full" />
-                    </div>
-                </button>
-            )}
-
-            {/* Expand toggle bar - when participants are hidden */}
-            {hasFeaturedContent && !isParticipantsVisible && (
-                <button
-                    onClick={() => setIsParticipantsVisible(true)}
-                    className="fixed bottom-12 md:bottom-14 left-0 right-0 bg-card/30 hover:bg-card/95 hover:backdrop-blur-sm transition-all duration-200 flex items-center justify-center py-2 cursor-pointer group z-40 min-h-[44px]"
-                    title="Показать участников"
-                >
-                    <div className="flex items-center gap-2 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
-                        <div className="w-8 h-0.5 bg-border/50 group-hover:bg-border transition-colors rounded-full" />
-                        <ChevronUp className="w-4 h-4" />
-                        <div className="w-8 h-0.5 bg-border/50 group-hover:bg-border transition-colors rounded-full" />
-                    </div>
-                </button>
-            )}
-
-            {/* Raised hands badge (only when participants are hidden) */}
-            {hasFeaturedContent && !isParticipantsVisible && (
-                <RaisedHandsBadge participants={participants} raisedHands={raisedHands} />
-            )}
+            {/* Spacer for Control Panel */}
+            <div className={`flex-shrink-0 transition-all duration-300 ${isUiVisible ? 'h-[80px]' : 'h-0'}`} />
 
             {/* Control Panel - fixed at bottom */}
-            <div className="fixed bottom-0 left-0 right-0 z-30">
+            <div className={`fixed bottom-0 left-0 right-0 z-30 transition-transform duration-300 ${isUiVisible ? 'translate-y-0' : 'translate-y-full'}`}>
                 <ControlPanel
                     isCameraEnabled={localParticipant.isCameraEnabled}
                     isMicrophoneEnabled={localParticipant.isMicrophoneEnabled}
