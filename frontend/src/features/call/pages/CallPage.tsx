@@ -274,6 +274,57 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
     const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
     const chunksRef = React.useRef<Blob[]>([]);
 
+    // Extension integration state
+    const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
+
+    // Check for extension on mount
+    useEffect(() => {
+        const handleExtensionMessage = (event: MessageEvent) => {
+            if (event.source !== window) return;
+
+            if (event.data?.type === 'nimeet_extension_pong' || event.data?.type === 'nimeet_extension_loaded') {
+                console.log('[NIMeet] Extension detected');
+                setIsExtensionInstalled(true);
+            }
+
+            // Handle YouTube URL from extension
+            if (event.data?.type === 'nimeet_play_youtube' && event.data?.url) {
+                console.log('[NIMeet] Received YouTube URL from extension:', event.data.url);
+                // Activate YouTube player and load video
+                setIsYouTubeActive(true);
+                setYoutubeCreatorId(localParticipant.identity);
+                // Signal to YouTubePlayer to load this URL
+                setTimeout(() => {
+                    window.postMessage({
+                        type: 'nimeet_load_youtube_url',
+                        url: event.data.url
+                    }, '*');
+                }, 500);
+            }
+        };
+
+        window.addEventListener('message', handleExtensionMessage);
+
+        // Ping extension to check if installed
+        window.postMessage({ type: 'nimeet_extension_ping' }, '*');
+
+        return () => window.removeEventListener('message', handleExtensionMessage);
+    }, [localParticipant.identity]);
+
+    // Notify extension when joining/leaving call
+    useEffect(() => {
+        // Notify extension that we're in a call
+        window.postMessage({ type: 'nimeet_call_started', callId }, '*');
+        console.log('[NIMeet] Notified extension: call started');
+
+        return () => {
+            // Notify extension that we left the call
+            window.postMessage({ type: 'nimeet_call_ended' }, '*');
+            console.log('[NIMeet] Notified extension: call ended');
+        };
+    }, [callId]);
+
+
     const restartIdleTimer = useCallback(() => {
         setIsUiVisible(true);
         if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
@@ -635,8 +686,8 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
             {/* Participants strip (changes height based on featured content) */}
             <div
                 className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] relative ${hasFeaturedContent
-                        ? (isParticipantsVisible ? 'h-[120px] md:h-[160px] opacity-100' : 'h-0 opacity-0')
-                        : 'flex-1 opacity-100'
+                    ? (isParticipantsVisible ? 'h-[120px] md:h-[160px] opacity-100' : 'h-0 opacity-0')
+                    : 'flex-1 opacity-100'
                     }`}
             >
                 <VideoGrid
@@ -670,6 +721,7 @@ const CallContent = ({ onLeave, callId, onReconnecting, onReconnected }: { onLea
                     isHandRaised={raisedHands.has(localParticipant.identity)}
                     isYouTubeActive={isYouTubeActive}
                     isRecording={isRecording}
+                    isExtensionInstalled={isExtensionInstalled}
                     onToggleCamera={toggleCamera}
                     onToggleMicrophone={toggleMicrophone}
                     onToggleScreenShare={toggleScreenShare}

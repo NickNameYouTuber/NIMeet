@@ -1,0 +1,121 @@
+/* NIMeet YouTube Extension - YouTube Button Styles */
+
+#nimeet-broadcast-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    margin-right: 8px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 1;
+    height: 32px;
+}
+
+#nimeet-broadcast-btn:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    transform: scale(1.05);
+}
+
+#nimeet-broadcast-btn:active {
+    transform: scale(0.98);
+}
+
+#nimeet-broadcast-btn.nimeet-inactive {
+    background: #4b5563;
+    opacity: 0.7;
+}
+
+#nimeet-broadcast-btn.nimeet-inactive:hover {
+    background: #6b7280;
+    opacity: 0.9;
+}
+
+#nimeet-broadcast-btn.nimeet-active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    animation: nimeet-pulse 2s infinite;
+}
+
+#nimeet-broadcast-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+@keyframes nimeet-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+}
+
+/* Notification Toast */
+.nimeet-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
+    z-index: 99999;
+    animation: nimeet-slide-in 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.nimeet-notification-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.nimeet-notification-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.nimeet-notification-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.nimeet-notification-info {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.nimeet-notification-hide {
+    animation: nimeet-slide-out 0.3s ease forwards;
+}
+
+@keyframes nimeet-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes nimeet-slide-out {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
