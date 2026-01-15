@@ -12,6 +12,11 @@
         "activeTab",
         "tabs"
     ],
+    "host_permissions": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://*.nimeet.ru/*"
+    ],
     "background": {
         "service_worker": "background/service-worker.js"
     },
